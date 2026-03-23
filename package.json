@@ -1,6 +1,6 @@
 {
   "name": "launcher-v2",
-  "version": "2.0.0",
+  "version": "1.0.0",
   "description": "Launcher v2 — Hub central de la Tranquility Suite",
   "main": "src/main/main.js",
   "scripts": {
@@ -19,7 +19,7 @@
       ]
     },
     "dmg": {
-      "title": "Launcher v2"
+      "title": "Launcher — Tranquility Suite"
     }
   },
   "dependencies": {
