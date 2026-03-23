@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self'; connect-src 'self' https://raw.githubusercontent.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; script-src 'self'"/>
+  <title>Launcher — Tranquility Suite</title>
+  <link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+
+<!-- Canvas cosmos -->
+<canvas id="cosmosCanvas"></canvas>
+
+<!-- Title bar -->
+<div class="title-bar"></div>
+
+<!-- ── Splash Mercury ──────────────────────────────────── -->
+<div id="splash">
+  <canvas id="dot-grid" style="position:absolute;inset:0;opacity:0;"></canvas>
+  <svg id="ring-svg" style="position:absolute;width:260px;height:260px;
+       transform:translate(-50%,-50%) rotate(-90deg);left:50%;top:50%;opacity:0;"
+       viewBox="0 0 260 260">
+    <circle cx="130" cy="130" r="122" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+    <circle cx="130" cy="130" r="115" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.2"
+            stroke-linecap="round" stroke-dasharray="722" stroke-dashoffset="722" id="ring-draw"/>
+    <circle cx="130" cy="130" r="108" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="0.5"/>
+  </svg>
+  <video id="patch-el" src="assets/ambiances/ambiance-launcher.mp4"
+       autoplay loop muted playsinline
+       style="width:155px;height:155px;border-radius:50%;object-fit:cover;opacity:0;transform:scale(0.88) rotate(5deg);position:relative;z-index:2;"></video>
+  <div id="ver-el" style="color:white;font-family:'Lato',sans-serif;font-weight:700;
+       font-size:7.5px;text-transform:uppercase;letter-spacing:0.22em;
+       margin-top:22px;opacity:0;position:relative;z-index:2;"></div>
+  <div id="flash-el" style="position:absolute;inset:0;background:white;opacity:0;pointer-events:none;z-index:10;"></div>
+</div>
+
+<!-- ── App ─────────────────────────────────────────────── -->
+<div id="app" style="display:none;flex-direction:column;flex:1;height:calc(100vh - 28px);">
+
+  <!-- Header -->
+  <header class="app-header">
+    <div class="header-brand">
+      <img class="header-logo" src="assets/icons/launcher-logo.png" alt="Launcher"/>
+      <span class="header-title">Launcher</span>
+      <span class="header-version" id="appVersion"></span>
+      <div class="header-sep"></div>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-ghost btn-sm hidden" id="header-update-badge" type="button">0 MISE(S) À JOUR</button>
+      <button class="btn btn-ghost btn-sm" id="btn-open-settings" type="button">RÉGLAGES</button>
+      <button class="btn btn-ghost btn-sm btn-sound-toggle" id="btn-sound-toggle" title="Son ON/OFF">SON</button>
+      <button class="btn btn-ghost btn-sm" id="btnMasterToDashboard" style="display:none;">← Dashboard</button>
+      <button class="btn btn-master btn-sm" id="btnMaster" style="display:none;">⬡ Master</button>
+      <button class="btn btn-ghost btn-sm" id="btnProfiles">Changer de profil</button>
+      <button class="btn btn-ghost btn-sm" id="btnQuit">Quitter</button>
+    </div>
+  </header>
+
+  <!-- Onboarding -->
+  <section id="screen-onboarding">
+    <div class="onboarding-container">
+      <div class="onboarding-step active" id="onboarding-step-1">
+        <div class="onboarding-icon">🚀</div>
+        <h1 class="onboarding-title">Bienvenue dans<br/>la Tranquility Suite</h1>
+        <p class="onboarding-text">Launcher est ton point d'entrée vers tous les outils de la Cellule Vidéo.<br/>On te configure en moins de deux minutes.</p>
+        <button class="btn btn-primary" id="onboarding-next-1">Commencer →</button>
+      </div>
+      <div class="onboarding-step" id="onboarding-step-2">
+        <div class="onboarding-icon">👤</div>
+        <h1 class="onboarding-title">Crée ton profil</h1>
+        <p class="onboarding-text">Ton profil te suit sur tous les Macs de la cellule.</p>
+        <div class="field-group" style="text-align:left">
+          <label class="field-label">Prénom *</label>
+          <input class="text-input" type="text" id="onboarding-firstname" placeholder="ex : Alan"/>
+        </div>
+        <div class="field-group" style="text-align:left">
+          <label class="field-label">Nom *</label>
+          <input class="text-input" type="text" id="onboarding-lastname" placeholder="ex : Shepard"/>
+        </div>
+        <div class="field-group" style="text-align:left">
+          <label class="field-label">Email (optionnel)</label>
+          <input class="text-input" type="email" id="onboarding-email" placeholder="ex : alan.shepard@letudiant.fr"/>
+        </div>
+        <button class="btn btn-primary" id="onboarding-next-2" style="margin-top:8px">Continuer →</button>
+      </div>
+      <div class="onboarding-step" id="onboarding-step-3">
+        <div class="onboarding-icon">🛠️</div>
+        <h1 class="onboarding-title">Tes outils</h1>
+        <p class="onboarding-text">
+          <strong>BackUpFlow</strong> — sauvegarde tes rushes automatiquement.<br/>
+          <strong>Transporter</strong> — prépare et envoie tes fichiers Premiere.<br/>
+          <strong>Reviewer</strong> — valide les montages en équipe.<br/>
+          <strong>Manifest</strong> — génère tes feuilles de service.
+        </p>
+        <button class="btn btn-primary" id="onboarding-next-3">Super, allons-y →</button>
+      </div>
+      <div class="onboarding-step" id="onboarding-step-4">
+        <div class="onboarding-icon">✅</div>
+        <h1 class="onboarding-title">C'est prêt !</h1>
+        <p class="onboarding-text">Ton profil est créé. Accède maintenant à tous les outils depuis le dashboard.</p>
+        <button class="btn btn-primary" id="onboarding-finish">Accéder au dashboard →</button>
+      </div>
+      <div class="onboarding-progress">
+        <div class="onboarding-dot active" id="dot-1"></div>
+        <div class="onboarding-dot" id="dot-2"></div>
+        <div class="onboarding-dot" id="dot-3"></div>
+        <div class="onboarding-dot" id="dot-4"></div>
+      </div>
+      <div style="margin-top:16px;text-align:right">
+        <button class="btn btn-ghost btn-sm" id="onboarding-skip">Passer</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Profils -->
+  <section id="screen-profiles">
+    <div class="profiles-container">
+      <h1 class="profiles-title">Choisissez votre profil</h1>
+      <p class="profiles-subtitle">Sélectionnez un profil pour accéder à vos outils</p>
+      <div class="profiles-grid" id="profilesGrid"></div>
+      <button class="btn btn-ghost btn-sm" id="btnAddProfile" style="margin-top:8px">+ Ajouter un profil</button>
+    </div>
+  </section>
+
+  <!-- Dashboard -->
+  <section id="screen-dashboard">
+    <main class="app-main">
+      <div class="greeting">
+        <div class="greeting-name">Bonjour, <span id="greetingName">—</span></div>
+        <div class="greeting-sub" id="dailyQuote">—</div>
+      </div>
+      <div class="section-title">Applications</div>
+      <div class="apps-grid" id="appsGrid"></div>
+    </main>
+    <div class="bottom-bar">
+      <div class="bottom-left">Tranquility Suite · Phase Mercury</div>
+      <button class="btn btn-report btn-sm" id="btnReportBug">⚠ Signaler un problème</button>
+    </div>
+  </section>
+
+  <!-- Master -->
+  <section id="screen-master">
+    <div class="master-layout">
+
+      <!-- Sidebar navigation -->
+      <nav class="master-nav">
+        <div class="master-nav-title">MASTER</div>
+        <div class="master-nav-sub">Tour de contrôle</div>
+        <div class="master-nav-items">
+          <button class="master-nav-item active" data-tab="programme">Programme</button>
+          <button class="master-nav-item" data-tab="equipe">Équipe</button>
+          <button class="master-nav-item" data-tab="trousseau">Retriever</button>
+          <button class="master-nav-item" data-tab="sync">Synchronisation</button>
+          <button class="master-nav-item" data-tab="systeme">Système</button>
+          <button class="master-nav-item" data-tab="data">Data</button>
+        </div>
+      </nav>
+
+      <!-- Contenu -->
+      <main class="master-content">
+
+        <!-- Tab Programme -->
+        <div class="master-tab active" id="master-tab-programme">
+          <div class="master-tab-title" id="masterTitle">Programme</div>
+          <div class="master-tab-subtitle" style="font-size:1rem;color:#ffffff;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:16px;">État du programme Mercury, version de Launcher et avancement de la flotte.</div>
+          <div class="master-cards-row">
+            <div class="master-stat-card">
+              <div class="master-stat-label">Suite</div>
+              <div class="master-stat-value">Tranquility Suite</div>
+            </div>
+            <div class="master-stat-card">
+              <div class="master-stat-label">Phase en cours</div>
+              <div class="master-stat-value accent">Mercury</div>
+            </div>
+            <div class="master-stat-card">
+              <div class="master-stat-label">Version Launcher</div>
+              <div class="master-stat-value" id="masterVersion">—</div>
+            </div>
+            <div class="master-stat-card">
+              <div class="master-stat-label">Profils actifs</div>
+              <div class="master-stat-value" id="masterProfileCount">—</div>
+            </div>
+          </div>
+          <div class="master-section-title">Applications</div>
+          <div id="masterAppsList"></div>
+        </div>
+
+        <!-- Tab Équipe -->
+        <div class="master-tab" id="master-tab-equipe">
+          <div class="master-tab-title">Équipe</div>
+          <div class="master-tab-subtitle" style="font-size:1rem;color:#ffffff;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:16px;">Gestion des profils, rôles, groupes métier et synchronisation des accès.</div>
+          <div class="master-cards-row" style="margin-bottom:16px;">
+            <div class="master-stat-card" style="flex:1">
+              <div class="master-stat-label">Dernière sync GitHub</div>
+              <div class="master-stat-value" id="equipe-last-sync">—</div>
+            </div>
+            <div class="master-stat-card" style="flex:1">
+              <div class="master-stat-label">Profils synchronisés</div>
+              <div class="master-stat-value" id="equipe-profiles-count">—</div>
+            </div>
+            <div class="master-stat-card" style="flex:1">
+              <div class="master-stat-label">Inactifs +30j</div>
+              <div class="master-stat-value" id="equipe-inactive-count">—</div>
+            </div>
+          </div>
+          <div class="master-equipe-toolbar">
+            <select class="master-select" id="masterFilterGroup">
+              <option value="all">Tous les groupes</option>
+              <option value="cellule">Cellule Vidéo</option>
+              <option value="externe">Externes</option>
+            </select>
+          </div>
+          <div id="masterEquipeList"></div>
+        </div>
+
+        <!-- Tab Trousseau -->
+        <div class="master-tab" id="master-tab-trousseau">
+          <div class="master-tab-title">Retriever</div>
+          <div class="master-tab-subtitle" style="font-size:1rem;color:#ffffff;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:16px;">Coffre-fort des clés API de la suite. Chiffrement AES-256-GCM, sauvegarde GitHub.</div>
+          <p class="master-hint">Ces clés sont ta référence centrale. Chaque app conserve ses propres clés — le Retriever est ton filet de sécurité. Chiffré, synchronisé entre tes deux Macs via GitHub.</p>
+
+          <div class="master-section-title">Intégrations principales</div>
+          <div class="master-key-row">
+            <div class="master-key-info">
+              <div class="master-key-name">Monday.com</div>
+              <div class="master-key-desc">Token API — projets, subitems, colonnes</div>
+            </div>
+            <div class="input-reveal master-key-input">
+              <input class="text-input" type="password" id="keyMonday" placeholder="eyJhbGci..."/>
+              <button class="btn-reveal" type="button" data-target="keyMonday">voir</button>
+              <button class="btn-copy" type="button" data-copy="keyMonday">copier</button>
+            </div>
+            <div class="master-key-age" id="key-age-monday">—</div>
+          </div>
+          <div class="master-key-row">
+            <div class="master-key-info">
+              <div class="master-key-name">Anthropic</div>
+              <div class="master-key-desc">API Claude — notes de version, assistant</div>
+            </div>
+            <div class="input-reveal master-key-input">
+              <input class="text-input" type="password" id="keyAnthropic" placeholder="sk-ant-..."/>
+              <button class="btn-reveal" type="button" data-target="keyAnthropic">voir</button>
+              <button class="btn-copy" type="button" data-copy="keyAnthropic">copier</button>
+            </div>
+            <div class="master-key-age" id="key-age-anthropic">—</div>
+          </div>
+          <div class="master-key-row">
+            <div class="master-key-info">
+              <div class="master-key-name">Resend</div>
+              <div class="master-key-desc">Email transactionnel — signalements, alertes</div>
+            </div>
+            <div class="input-reveal master-key-input">
+              <input class="text-input" type="password" id="keyResend" placeholder="re_..."/>
+              <button class="btn-reveal" type="button" data-target="keyResend">voir</button>
+              <button class="btn-copy" type="button" data-copy="keyResend">copier</button>
+            </div>
+            <div class="master-key-age" id="key-age-resend">—</div>
+          </div>
+          <div class="master-key-row">
+            <div class="master-key-info">
+              <div class="master-key-name">Gofile</div>
+              <div class="master-key-desc">Upload cloud — transfert de fichiers lourds</div>
+            </div>
+            <div class="input-reveal master-key-input">
+              <input class="text-input" type="password" id="keyGofile" placeholder="Token Gofile..."/>
+              <button class="btn-reveal" type="button" data-target="keyGofile">voir</button>
+              <button class="btn-copy" type="button" data-copy="keyGofile">copier</button>
+            </div>
+            <div class="master-key-age" id="key-age-gofile">—</div>
+          </div>
+          <div class="master-key-row">
+            <div class="master-key-info">
+              <div class="master-key-name">GitHub</div>
+              <div class="master-key-desc">Token — sync profils, releases API</div>
+            </div>
+            <div class="input-reveal master-key-input">
+              <input class="text-input" type="password" id="keyGithub" placeholder="ghp_..."/>
+              <button class="btn-reveal" type="button" data-target="keyGithub">voir</button>
+              <button class="btn-copy" type="button" data-copy="keyGithub">copier</button>
+            </div>
+            <div class="master-key-age" id="key-age-github">—</div>
+          </div>
+
+          <div class="master-section-title" style="margin-top:24px;">Slots personnalisés</div>
+          <div id="masterCustomKeys"></div>
+          <button class="btn btn-ghost btn-sm" id="btnAddCustomKey" style="margin-top:8px;">+ Ajouter une clé</button>
+
+          <div style="margin-top:24px;">
+            <div style="margin-bottom:12px;">
+              <span class="master-key-desc" id="retrieverSyncInfo">—</span>
+            </div>
+            <div class="master-section-title" style="margin-top:16px;">Statut des connexions</div>
+            <div id="retrieverPingList" style="display:flex;flex-direction:column;gap:8px;margin-top:8px;">
+              <div class="master-ping-row" id="ping-monday"><span class="master-ping-dot" id="ping-dot-monday">●</span><span class="master-ping-name">Monday.com</span><span class="master-ping-latency" id="ping-lat-monday">—</span></div>
+              <div class="master-ping-row" id="ping-github"><span class="master-ping-dot" id="ping-dot-github">●</span><span class="master-ping-name">GitHub</span><span class="master-ping-latency" id="ping-lat-github">—</span></div>
+              <div class="master-ping-row" id="ping-gofile"><span class="master-ping-dot" id="ping-dot-gofile">●</span><span class="master-ping-name">Gofile</span><span class="master-ping-latency" id="ping-lat-gofile">—</span></div>
+              <div class="master-ping-row" id="ping-resend"><span class="master-ping-dot" id="ping-dot-resend">●</span><span class="master-ping-name">Resend</span><span class="master-ping-latency" id="ping-lat-resend">—</span></div>
+              <div class="master-ping-row" id="ping-anthropic"><span class="master-ping-dot" id="ping-dot-anthropic">●</span><span class="master-ping-name">Anthropic</span><span class="master-ping-latency" id="ping-lat-anthropic">—</span></div>
+            </div>
+            <button class="btn btn-primary btn-sm" id="btnPingConnections" style="margin-top:10px;">Tester les connexions</button>
+
+            <button class="btn btn-primary btn-sm" id="btnSaveTrousseau">Sauvegarder le trousseau</button>
+          </div>
+        </div>
+
+        <!-- Tab Synchronisation -->
+        <div class="master-tab" id="master-tab-sync">
+          <div class="master-tab-title">Synchronisation</div>
+          <div class="master-tab-subtitle" style="font-size:1rem;color:#ffffff;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:16px;">Statut du repo launcher-profiles, historique des opérations push/pull.</div>
+          <div class="master-sync-status" id="masterSyncStatus">
+            <div class="master-stat-card" style="flex:1">
+              <div class="master-stat-label">Repo</div>
+              <div class="master-stat-value">launcher-profiles</div>
+            </div>
+            <div class="master-stat-card" style="flex:1">
+              <div class="master-stat-label">Dernière sync</div>
+              <div class="master-stat-value" id="sync-last-date">Jamais</div>
+            </div>
+            <div class="master-stat-card" style="flex:1">
+              <div class="master-stat-label">Statut</div>
+              <div class="master-stat-value" id="sync-status">Non synchronisé</div>
+            </div>
+            <div class="master-stat-card" style="flex:1">
+              <div class="master-stat-label">Profils synchronisés</div>
+              <div class="master-stat-value" id="sync-profiles-count">—</div>
+            </div>
+            <div class="master-stat-card" style="flex:1">
+              <div class="master-stat-label">Source au démarrage</div>
+              <div class="master-stat-value" id="sync-source">—</div>
+            </div>
+            <div class="master-stat-card" style="flex:1">
+              <div class="master-stat-label">Token GitHub</div>
+              <div class="master-stat-value" id="sync-token-status">—</div>
+            </div>
+          </div>
+          <div style="margin-top:20px;display:flex;gap:10px;">
+            <button class="btn btn-primary btn-sm" id="btnForcePush">Pousser vers GitHub</button>
+            <button class="btn btn-ghost btn-sm" id="btnForcePull">Tirer depuis GitHub</button>
+          </div>
+          <div style="margin-top:24px;">
+            <div class="master-section-title">HISTORIQUE DES OPÉRATIONS</div>
+            <div id="sync-log-container" style="max-height:200px;overflow-y:auto;background:rgba(0,0,0,0.2);border-radius:var(--radius);padding:12px;font-family:monospace;font-size:11px;">Aucune opération enregistrée</div>
+          </div>
+        </div>
+
+        <!-- Tab Data -->
+        <div class="master-tab" id="master-tab-data">
+          <div class="master-tab-title">Data</div>
+          <div class="master-tab-subtitle" style="font-size:1rem;color:#ffffff;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:16px;">Statistiques d'usage de la suite — lancements, profils actifs, stockage.</div>
+          <div class="master-section-title">Activité</div>
+          <div class="master-system-row">
+            <div>
+              <div class="master-key-name">Nombre total de lancements d'apps</div>
+              <div class="master-key-desc" id="data-total-launches">Chargement...</div>
+            </div>
+          </div>
+          <div class="master-system-row">
+            <div>
+              <div class="master-key-name">App la plus lancée</div>
+              <div class="master-key-desc" id="data-top-app">Chargement...</div>
+            </div>
+          </div>
+          <div class="master-system-row">
+            <div>
+              <div class="master-key-name">Profil le plus actif</div>
+              <div class="master-key-desc" id="data-top-profile">Chargement...</div>
+            </div>
+          </div>
+          <div class="master-section-title">Synchronisation</div>
+          <div class="master-system-row">
+            <div>
+              <div class="master-key-name">Dernière sync GitHub réussie</div>
+              <div class="master-key-desc" id="data-last-sync">Chargement...</div>
+            </div>
+          </div>
+          <div class="master-system-row">
+            <div>
+              <div class="master-key-name">Nombre de profils synchronisés</div>
+              <div class="master-key-desc" id="data-profiles-count">Chargement...</div>
+            </div>
+          </div>
+          <div class="master-section-title">Stockage</div>
+          <div class="master-system-row">
+            <div>
+              <div class="master-key-name">Taille du cache des profils</div>
+              <div class="master-key-desc" id="data-cache-size">Chargement...</div>
+            </div>
+          </div>
+          <div class="master-system-row">
+            <div>
+              <div class="master-key-name">Taille du dossier downloads</div>
+              <div class="master-key-desc" id="data-downloads-size">Chargement...</div>
+            </div>
+          </div>
+          <div class="master-system-row">
+            <div>
+              <div class="master-key-name">Taille totale userData</div>
+              <div class="master-key-desc" id="data-userdata-size">Chargement...</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab Système -->
+        <div class="master-tab" id="master-tab-systeme">
+          <div class="master-tab-title">Système</div>
+          <div class="master-tab-subtitle" style="font-size:1rem;color:#ffffff;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:16px;">Diagnostic technique, caches, Plan Directeur et mode diagnostic réseau.</div>
+          <div class="master-system-row">
+            <div>
+              <div class="master-key-name">Mot de passe Admin</div>
+              <div class="master-key-desc">Protège l'accès au Mode Master</div>
+            </div>
+            <button class="btn btn-ghost btn-sm" id="btnChangeAdminPassword">Modifier</button>
+          </div>
+          <div class="master-system-row">
+            <div>
+              <div class="master-key-name">Onboarding</div>
+              <div class="master-key-desc">Rejouer la séquence d'accueil au prochain lancement</div>
+            </div>
+            <button class="btn btn-ghost btn-sm" id="btnResetOnboarding">Réinitialiser</button>
+          </div>
+          <div class="master-system-row">
+            <div>
+              <div class="master-key-name">Fichier lock Admin</div>
+              <div class="master-key-desc">Supprimer ce fichier réinitialise le mot de passe admin</div>
+            </div>
+            <div class="master-stat-value" id="masterLockStatus" style="font-size:11px;">—</div>
+          </div>
+          <div class="master-section-title">Plan Directeur</div>
+          <div class="master-system-row">
+            <div>
+              <div class="master-key-name">Version</div>
+              <div class="master-key-desc" id="plan-directeur-version">—</div>
+            </div>
+          </div>
+          <div class="master-system-row">
+            <div>
+              <div class="master-key-name">Phase</div>
+              <div class="master-key-desc" id="plan-directeur-phase">—</div>
+            </div>
+          </div>
+          <div class="master-system-row">
+            <div>
+              <div class="master-key-name">Dernière mise à jour</div>
+              <div class="master-key-desc" id="plan-directeur-date">—</div>
+            </div>
+          </div>
+          <div class="master-system-row">
+            <div>
+              <div class="master-key-name">Statut</div>
+              <div class="master-key-desc" id="plan-directeur-status">Chargement...</div>
+            </div>
+            <button class="btn btn-ghost btn-sm" id="btn-refresh-plan-directeur">Rafraîchir</button>
+          </div>
+          <div class="master-section-title">Diagnostic réseau</div>
+          <div class="master-system-row">
+            <div>
+              <div class="master-key-name">Connectivité des services</div>
+              <div class="master-key-desc">Teste la connexion à Monday, GitHub, Gofile, Resend et Anthropic</div>
+            </div>
+            <button class="btn btn-ghost btn-sm" id="btnDiagnosticReseau">Lancer le diagnostic</button>
+          </div>
+          <div class="master-section-title">Caches</div>
+          <div class="master-system-row">
+            <div>
+              <div class="master-key-name">Vider le cache des profils</div>
+              <div class="master-key-desc">Supprime profiles-cache.json — les profils seront re-téléchargés depuis GitHub au prochain démarrage</div>
+            </div>
+            <button class="btn btn-ghost btn-sm" id="btnClearProfilesCache">Vider</button>
+          </div>
+          <div class="master-system-row">
+            <div>
+              <div class="master-key-name">Vider les téléchargements</div>
+              <div class="master-key-desc">Supprime les fichiers .dmg téléchargés — les apps installées ne sont pas affectées</div>
+            </div>
+            <button class="btn btn-ghost btn-sm" id="btnClearDownloads">Vider</button>
+          </div>
+          <div class="master-system-row">
+            <div>
+              <div class="master-key-name">Réinitialiser le Retriever</div>
+              <div class="master-key-desc">Supprime la clé locale du Retriever dans le Trousseau macOS</div>
+            </div>
+            <button class="btn btn-danger btn-sm" id="btnClearRetrieverKeytar">Réinitialiser</button>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </section>
+
+</div><!-- /#app -->
+
+<!-- ── Toasts ───────────────────────────────────────────── -->
+<div id="toasts"></div>
+
+<!-- ── Modale Réglages ─────────────────────────────────── -->
+<style>
+.btn-dash-view:hover { background: rgba(255,255,255,0.05) !important; color: var(--text-secondary) !important; }
+.btn-dash-view.active { background: rgba(245,158,11,0.15) !important; color: var(--warning) !important; border-color: var(--warning) !important; }
+.master-ping-row { display:flex; align-items:center; gap:10px; font-size:13px; }
+.master-ping-dot { font-size:10px; color:#888; transition:color 0.3s; }
+.master-ping-name { flex:1; color:var(--text-secondary); }
+.master-ping-latency { font-size:11px; color:var(--text-tertiary); min-width:70px; text-align:right; }
+.master-key-age { font-size:10px; color:var(--text-tertiary); margin-top:3px; margin-left:2px; }
+</style>
+<div class="modal-overlay" id="modal-settings">
+  <div class="modal" style="width:min(920px,96vw);max-height:86vh;padding:0;display:flex;flex-direction:column;overflow:hidden;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-lg)">
+    <div class="modal-header" style="flex-shrink:0">
+      <span class="modal-title">RÉGLAGES</span>
+      <button class="modal-close" id="modal-settings-close" type="button">✕</button>
+    </div>
+    <div class="master-layout" style="flex:1;min-height:0;overflow:hidden">
+      <nav class="master-nav" style="width:220px;flex-shrink:0">
+        <div class="master-nav-title" style="font-size:11px;letter-spacing:3px">RÉGLAGES</div>
+        <div class="master-nav-sub">Préférences</div>
+        <div class="master-nav-items">
+          <button type="button" class="master-nav-item settings-nav-item active" data-settings-section="son">Son &amp; Ambiance</button>
+          <button type="button" class="master-nav-item settings-nav-item" data-settings-section="apps">Apps &amp; Lancement</button>
+          <button type="button" class="master-nav-item settings-nav-item" data-settings-section="notif">Notifications</button>
+          <button type="button" class="master-nav-item settings-nav-item" data-settings-section="profil">Profil &amp; Expérience</button>
+          <button type="button" class="master-nav-item settings-nav-item" data-settings-section="changelog">Changelog</button>
+          <button type="button" class="master-nav-item settings-nav-item" data-settings-section="permissions">Permissions</button>
+          <button type="button" class="master-nav-item settings-nav-item" data-settings-section="logs">Console</button>
+        </div>
+      </nav>
+      <main class="master-content" style="overflow-y:auto;flex:1">
+        <div class="settings-panel master-tab active" id="settings-panel-son">
+          <div class="master-section-title">Volume ambiance</div>
+          <div class="field-group">
+            <label class="field-label" for="settings-volume">Niveau (0–100)</label>
+            <input type="range" id="settings-volume" min="0" max="100" value="100" style="width:100%"/>
+          </div>
+          <div class="field-group">
+            <label class="field-label" style="display:flex;align-items:center;gap:8px;cursor:pointer">
+              <input type="checkbox" id="settings-sound-autostart"/> Activer le son au démarrage
+            </label>
+          </div>
+        </div>
+        <div class="settings-panel master-tab" id="settings-panel-apps" style="display:none">
+          <div class="master-section-title">Destination DMG</div>
+          <div class="field-group" style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">
+            <div style="flex:1;min-width:200px">
+              <label class="field-label" for="settings-dmg-path">Dossier</label>
+              <input class="text-input" type="text" id="settings-dmg-path" readonly placeholder="Par défaut : dossier temporaire"/>
+            </div>
+            <button type="button" class="btn btn-ghost btn-sm" id="settings-dmg-browse">Parcourir</button>
+          </div>
+          <div class="master-section-title">Lancement</div>
+          <div class="field-group">
+            <label class="field-label" for="settings-startup-app">App de démarrage</label>
+            <select class="master-select" id="settings-startup-app" style="width:100%;max-width:400px"></select>
+          </div>
+          <div class="field-group">
+            <div class="field-label">Vue du dashboard</div>
+            <div id="settings-dashboard-view" style="display:flex;gap:4px;flex-wrap:wrap">
+              <button type="button" class="btn-dash-view" data-value="wide" style="padding:8px 14px;border:1px solid var(--border);border-radius:var(--radius);background:transparent;font-family:'Space Mono',monospace;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-tertiary);cursor:pointer;transition:all 0.15s">GRILLE LARGE</button>
+              <button type="button" class="btn-dash-view" data-value="compact" style="padding:8px 14px;border:1px solid var(--border);border-radius:var(--radius);background:transparent;font-family:'Space Mono',monospace;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-tertiary);cursor:pointer;transition:all 0.15s">GRILLE COMPACTE</button>
+              <button type="button" class="btn-dash-view" data-value="list" style="padding:8px 14px;border:1px solid var(--border);border-radius:var(--radius);background:transparent;font-family:'Space Mono',monospace;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-tertiary);cursor:pointer;transition:all 0.15s">LISTE</button>
+            </div>
+          </div>
+        </div>
+        <div class="settings-panel master-tab" id="settings-panel-notif" style="display:none">
+          <div class="field-group">
+            <label class="field-label" style="display:flex;align-items:center;gap:8px;cursor:pointer">
+              <input type="checkbox" id="settings-notif-updates"/> Notifications de mise à jour
+            </label>
+          </div>
+          <div class="field-group">
+            <label class="field-label" style="display:flex;align-items:center;gap:8px;cursor:pointer">
+              <input type="checkbox" id="settings-notif-summary"/> Notification résumé au démarrage
+            </label>
+          </div>
+        </div>
+        <div class="settings-panel master-tab" id="settings-panel-profil" style="display:none">
+          <div class="field-group" style="display:flex;gap:8px;flex-wrap:wrap">
+            <button type="button" class="btn btn-ghost btn-sm" id="settings-btn-avatar">Modifier mon avatar</button>
+            <button type="button" class="btn btn-ghost btn-sm" id="settings-btn-profile">Modifier mes infos</button>
+          </div>
+          <div class="field-group">
+            <label class="field-label" style="display:flex;align-items:center;gap:8px;cursor:pointer">
+              <input type="checkbox" id="settings-show-mottos"/> Afficher les devises latines
+            </label>
+          </div>
+          <div class="field-group">
+            <label class="field-label" style="display:flex;align-items:center;gap:8px;cursor:pointer">
+              <input type="checkbox" id="settings-show-badges"/> Afficher les badges de statut
+            </label>
+          </div>
+          <div class="field-group">
+            <label class="field-label" style="display:flex;align-items:center;gap:8px;cursor:pointer">
+              <input type="checkbox" id="settings-launch-at-login"/> Lancer Launcher au démarrage du Mac
+            </label>
+          </div>
+        </div>
+        <div class="settings-panel master-tab" id="settings-panel-changelog" style="display:none">
+          <div class="master-section-title">Changelog</div>
+          <p class="master-hint" style="margin-bottom:16px;">Dernières versions publiées pour chaque app de la suite.</p>
+          <div id="changelogList" style="display:flex;flex-direction:column;gap:20px;">
+            <div style="color:var(--text-tertiary);font-size:12px;">Chargement...</div>
+          </div>
+          <button class="btn btn-ghost btn-sm" id="btnRefreshChangelog" style="margin-top:16px;">Rafraîchir</button>
+        </div>
+        <div class="settings-panel master-tab" id="settings-panel-permissions" style="display:none">
+          <div class="master-section-title">Permissions système</div>
+          <p class="master-hint" style="margin-bottom:16px;">Autorisations accordées à Launcher par macOS.</p>
+          <div class="master-system-row">
+            <div>
+              <div class="master-key-name">Trousseau macOS</div>
+              <div class="master-key-desc">Accès au stockage chiffré des clés API</div>
+            </div>
+            <span id="perm-keychain" style="font-size:12px;">—</span>
+          </div>
+          <div class="master-system-row">
+            <div>
+              <div class="master-key-name">Notifications</div>
+              <div class="master-key-desc">Alertes mises à jour et signalements</div>
+            </div>
+            <span id="perm-notifications" style="font-size:12px;">—</span>
+          </div>
+          <div class="master-system-row">
+            <div>
+              <div class="master-key-name">Accès disque complet</div>
+              <div class="master-key-desc">Lecture des volumes externes — requis pour BackUpFlow et Transporter</div>
+            </div>
+            <span id="perm-fulldisk" style="font-size:12px;">—</span>
+          </div>
+          <button class="btn btn-ghost btn-sm" id="btnCheckPermissions" style="margin-top:16px;">Vérifier</button>
+        </div>
+        <div class="settings-panel master-tab" id="settings-panel-logs" style="display:none">
+          <div class="master-section-title">Console de logs</div>
+          <p class="master-hint" style="margin-bottom:12px;">Événements enregistrés depuis le démarrage du Launcher.</p>
+          <div id="logsConsoleOutput" style="background:#0d0d0d;border-radius:6px;padding:12px;font-family:'Space Mono',monospace;min-height:200px;max-height:400px;overflow-y:auto;color:#ccc;font-size:11px;line-height:1.6;">
+            Aucun événement enregistré.
+          </div>
+          <div style="margin-top:10px;display:flex;gap:8px;">
+            <button class="btn btn-ghost btn-sm" id="btnRefreshLogs">↺ Rafraîchir</button>
+            <button class="btn btn-ghost btn-sm" id="btnClearLogs">Vider</button>
+            <button class="btn btn-ghost btn-sm" id="btnExportReport">Exporter le rapport</button>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+</div>
+
+<!-- ── Modale Mises à jour ───────────────────────────────── -->
+<div class="modal-overlay" id="modal-updates">
+  <div class="modal modal-updates" style="width:min(640px,96vw);max-height:86vh;display:flex;flex-direction:column;overflow:hidden">
+    <div class="modal-header">
+      <span class="modal-title">MISES À JOUR DISPONIBLES</span>
+      <button class="modal-close" id="modal-updates-close" type="button">✕</button>
+    </div>
+    <div class="modal-body" style="flex:1;overflow-y:auto">
+      <p class="modal-updates-subtitle">Les nouvelles versions suivantes sont disponibles pour vos applications.</p>
+      <div id="updates-list" class="updates-list"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" id="btn-updates-all">TOUT METTRE À JOUR</button>
+      <button class="btn btn-ghost" id="modal-updates-btn-close">FERMER</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Modale Profil ────────────────────────────────────── -->
+<div class="modal-overlay" id="modalProfile">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modalProfileTitle">Nouveau profil</span>
+      <button class="modal-close" id="modalProfileClose">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="field-group">
+        <label class="field-label">Avatar</label>
+        <div class="avatar-selected-preview">
+          <img id="profileAvatarPreview" src="" alt="Avatar" style="display:none;"/>
+          <span id="profileAvatarPlaceholder" class="avatar-placeholder">Aucun avatar sélectionné</span>
+        </div>
+        <div class="avatar-grid" id="avatarGrid"></div>
+      </div>
+      <div class="field-group"><label class="field-label">Prénom *</label><input class="text-input" type="text" id="profileFirstName" placeholder="ex : John"/></div>
+      <div class="field-group"><label class="field-label">Nom *</label><input class="text-input" type="text" id="profileLastName" placeholder="ex : Glenn"/></div>
+      <div class="field-group"><label class="field-label">Email</label><input class="text-input" type="email" id="profileEmail" placeholder="ex : john.glenn@letudiant.fr"/></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-danger btn-sm" id="btnDeleteProfile" style="display:none;margin-right:auto">Supprimer</button>
+      <button class="btn btn-ghost" id="btnCancelProfile">Annuler</button>
+      <button class="btn btn-primary" id="btnSaveProfile">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Modale Signalement ───────────────────────────────── -->
+<div class="modal-overlay" id="modalBug">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Signaler un problème</span>
+      <button class="modal-close" id="modalBugClose">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="field-group"><label class="field-label">Décris le problème</label><textarea class="text-input" id="bugMessage" placeholder="Décris ce qui ne fonctionne pas..."></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="btnCancelBug">Annuler</button>
+      <button class="btn btn-primary" id="btnSendBug">Envoyer à Martin</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Modale Notes de version ──────────────────────────── -->
+<div class="modal-overlay" id="modalNotes">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modalNotesTitle">Nouveautés</span>
+      <button class="modal-close" id="modalNotesClose">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="modalNotesContent" style="font-size:13px;line-height:1.8;color:var(--text-secondary)">Chargement...</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="btnCancelNotes">Fermer</button>
+      <button class="btn btn-primary" id="btnUpdateFromNotes">Mettre à jour</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Modale App (PlayStation) ─────────────────────────── -->
+<div class="modal-overlay" id="modalApp">
+  <div style="position:relative;width:100%;max-width:980px;">
+    <button class="modal-close-abs" id="modalAppClose">✕</button>
+    <div class="modal-app">
+      <div class="app-tabs" id="modalTabs"></div>
+      <div class="modal-app-body">
+        <div class="modal-app-left">
+          <canvas class="ambiance-canvas" id="ambianceCanvas"></canvas>
+          <div class="modal-patch-container">
+            <img class="modal-patch-img" id="modalPatchImg" src="" alt=""/>
+            <video id="modalPatchVideo" autoplay loop muted playsinline style="display:none;"></video>
+          </div>
+          <div class="ambiance-label"><div class="ambiance-dot"></div>Ambiance</div>
+        </div>
+        <div class="modal-app-right">
+          <div class="modal-app-name" id="mName"></div>
+          <div class="modal-app-motto" id="mMotto"></div>
+          <div class="modal-app-translation" id="mTranslation"></div>
+          <div class="modal-app-badges" id="mBadges"></div>
+          <div class="modal-app-desc" id="mDesc"></div>
+          <div class="app-tech">
+            <div class="tech-row"><span class="tech-label">Chemin</span><span class="tech-value"><span class="tech-path" id="mPath"></span><button class="btn-tiny">Modifier</button></span></div>
+            <div class="tech-row"><span class="tech-label">Version</span><span class="tech-value" id="mVersion"></span></div>
+            <div class="tech-row"><span class="tech-label">Documentation</span><span class="tech-value"><button class="btn-tiny">↗ Ouvrir</button></span></div>
+          </div>
+          <div class="modal-actions">
+            <button class="m-btn m-btn-primary" id="mActionBtn">▶ Lancer</button>
+            <button class="m-btn m-btn-secondary" id="mChangelogBtn">📋 Changelog</button>
+            <button class="m-btn m-btn-danger" id="mUninstallBtn" style="display:none;">✕ Désinstaller</button>
+            <button class="m-btn m-btn-icon" id="mFavBtn" title="Favoris">★</button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-suggestions">
+        <div class="suggestions-title">Autres outils de la suite</div>
+        <div class="suggestions-row" id="mSuggestions"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Modale Admin ─────────────────────────────────────── -->
+<div class="modal-overlay" id="modalAdmin">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modalAdminTitle">Accès Admin</span>
+      <button class="modal-close" id="modalAdminClose">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="adminFormSet">
+        <p style="font-size:12px;color:var(--text-secondary);margin-bottom:16px;line-height:1.7;">Aucun mot de passe admin n'est défini.<br/>Crée-en un maintenant — il sera synchronisé sur tous les Macs.</p>
+        <div class="field-group">
+          <label class="field-label">Nouveau mot de passe</label>
+          <div class="input-reveal">
+            <input class="text-input" type="password" id="adminPasswordNew" placeholder="Choisis un mot de passe fort"/>
+            <button class="btn-reveal" type="button" data-target="adminPasswordNew">voir</button>
+          </div>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Confirmer</label>
+          <div class="input-reveal">
+            <input class="text-input" type="password" id="adminPasswordConfirm" placeholder="Répète le mot de passe"/>
+            <button class="btn-reveal" type="button" data-target="adminPasswordConfirm">voir</button>
+          </div>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Code de secours</label>
+          <p style="font-size:11px;color:var(--text-tertiary);margin-bottom:8px;line-height:1.6;">Une phrase mémorable. Utilisable à la place du mot de passe si tu l'oublies.</p>
+          <div class="input-reveal">
+            <input class="text-input" type="password" id="adminRescueCode" placeholder="ex : une phrase longue et mémorable"/>
+            <button class="btn-reveal" type="button" data-target="adminRescueCode">voir</button>
+          </div>
+        </div>
+      </div>
+      <div id="adminFormEnter" style="display:none;">
+        <div class="field-group">
+          <label class="field-label">Mot de passe admin</label>
+          <div class="input-reveal">
+            <input class="text-input" type="password" id="adminPasswordEnter" placeholder="Entrez le mot de passe"/>
+            <button class="btn-reveal" type="button" data-target="adminPasswordEnter">voir</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="btnCancelAdmin">Annuler</button>
+      <button class="btn btn-primary" id="btnConfirmAdmin">Confirmer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Modale Installation ──────────────────────────────── -->
+<div class="modal-overlay" id="modalInstall">
+  <div class="modal modal-install">
+    <div class="modal-install-header">
+      <div class="modal-install-patch">
+        <img id="installPatchImg" src="" alt="" />
+        <video id="installAmbianceVideo" autoplay loop muted playsinline style="display:none;"></video>
+      </div>
+      <div>
+        <div class="modal-install-title" id="installAppName">Installation</div>
+        <div class="modal-install-sub" id="installStatusLabel">Initialisation…</div>
+      </div>
+    </div>
+
+    <!-- Étape 1 : Téléchargement -->
+    <div class="install-step active" id="install-step-1">
+      <div class="install-progress-track">
+        <div class="install-progress-bar" id="installProgressBar" style="width:0%"></div>
+      </div>
+      <div class="install-progress-meta">
+        <span id="installPercent">0%</span>
+        <span id="installSpeed"></span>
+      </div>
+      <div class="install-phase-label" id="installPhaseLabel">Transfert en cours</div>
+    </div>
+
+    <!-- Étape 2 : Installation -->
+    <div class="install-step" id="install-step-2"></div>
+
+    <!-- Étape 3 : Confirmation -->
+    <div class="install-step" id="install-step-3">
+      <div class="install-success">
+        <div class="install-success-label" id="installSuccessLabel">En orbite.</div>
+        <div class="install-success-sub" id="installSuccessSubLabel">est prêt à être lancé.</div>
+      </div>
+      <button class="btn btn-primary" id="btnInstallLaunch">▶ Lancer maintenant</button>
+    </div>
+
+    <button class="modal-close install-close" id="modalInstallClose">✕</button>
+  </div>
+</div>
+
+<div id="modalDiagnostic" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;align-items:center;justify-content:center;">
+  <div class="modal" style="max-width:420px;width:100%;">
+    <div class="modal-header">
+      <div class="modal-title">Diagnostic réseau</div>
+      <button class="modal-close" id="btnCloseDiagnostic">✕</button>
+    </div>
+    <div class="modal-body" style="padding:24px;">
+      <div id="diagnosticResults" style="display:flex;flex-direction:column;gap:10px;">
+        <div class="diag-row" id="diag-monday"><span class="master-ping-dot" id="diag-dot-monday">●</span><span class="master-ping-name">Monday.com</span><span class="master-ping-latency" id="diag-lat-monday">—</span></div>
+        <div class="diag-row" id="diag-github"><span class="master-ping-dot" id="diag-dot-github">●</span><span class="master-ping-name">GitHub</span><span class="master-ping-latency" id="diag-lat-github">—</span></div>
+        <div class="diag-row" id="diag-gofile"><span class="master-ping-dot" id="diag-dot-gofile">●</span><span class="master-ping-name">Gofile</span><span class="master-ping-latency" id="diag-lat-gofile">—</span></div>
+        <div class="diag-row" id="diag-resend"><span class="master-ping-dot" id="diag-dot-resend">●</span><span class="master-ping-name">Resend</span><span class="master-ping-latency" id="diag-lat-resend">—</span></div>
+        <div class="diag-row" id="diag-anthropic"><span class="master-ping-dot" id="diag-dot-anthropic">●</span><span class="master-ping-name">Anthropic</span><span class="master-ping-latency" id="diag-lat-anthropic">—</span></div>
+      </div>
+      <div id="diagnosticSummary" style="margin-top:16px;font-size:12px;color:var(--text-tertiary);">—</div>
+    </div>
+  </div>
+</div>
+
+<script src="version.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

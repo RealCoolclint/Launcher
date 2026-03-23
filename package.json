@@ -1,0 +1,36 @@
+{
+  "name": "launcher-v2",
+  "version": "2.0.0",
+  "description": "Launcher v2 — Hub central de la Tranquility Suite",
+  "main": "src/main/main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder"
+  },
+  "build": {
+    "appId": "com.cellulevideo.launcher",
+    "productName": "Launcher",
+    "mac": {
+      "icon": "build/icon.icns",
+      "category": "public.app-category.productivity",
+      "target": [
+        "dmg",
+        "dir"
+      ]
+    },
+    "dmg": {
+      "title": "Launcher v2"
+    }
+  },
+  "dependencies": {
+    "chokidar": "^3.6.0",
+    "dotenv": "^17.3.1",
+    "keytar": "^7.9.0",
+    "resend": "^3.2.0"
+  },
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.0.0",
+    "electron-rebuild": "^3.2.9"
+  }
+}

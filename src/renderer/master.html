@@ -1,0 +1,189 @@
+  <!-- Master -->
+  <section id="screen-master">
+    <div class="master-layout">
+
+      <!-- Sidebar navigation -->
+      <nav class="master-nav">
+        <div class="master-nav-title">MASTER</div>
+        <div class="master-nav-sub">Tour de contrôle</div>
+        <div class="master-nav-items">
+          <button class="master-nav-item active" data-tab="programme">Programme</button>
+          <button class="master-nav-item" data-tab="equipe">Équipe</button>
+          <button class="master-nav-item" data-tab="trousseau">Retriever</button>
+          <button class="master-nav-item" data-tab="sync">Synchronisation</button>
+          <button class="master-nav-item" data-tab="systeme">Système</button>
+        </div>
+      </nav>
+
+      <!-- Contenu -->
+      <main class="master-content">
+
+        <!-- Tab Programme -->
+        <div class="master-tab active" id="master-tab-programme">
+          <div class="master-tab-title" id="masterTitle">Programme</div>
+          <div class="master-cards-row">
+            <div class="master-stat-card">
+              <div class="master-stat-label">Suite</div>
+              <div class="master-stat-value">Tranquility Suite</div>
+            </div>
+            <div class="master-stat-card">
+              <div class="master-stat-label">Phase en cours</div>
+              <div class="master-stat-value accent">Mercury</div>
+            </div>
+            <div class="master-stat-card">
+              <div class="master-stat-label">Version Launcher</div>
+              <div class="master-stat-value" id="masterVersion">—</div>
+            </div>
+            <div class="master-stat-card">
+              <div class="master-stat-label">Profils actifs</div>
+              <div class="master-stat-value" id="masterProfileCount">—</div>
+            </div>
+          </div>
+          <div class="master-section-title">Applications</div>
+          <div id="masterAppsList"></div>
+        </div>
+
+        <!-- Tab Équipe -->
+        <div class="master-tab" id="master-tab-equipe">
+          <div class="master-tab-title">Équipe</div>
+          <div class="master-equipe-toolbar">
+            <select class="master-select" id="masterFilterGroup">
+              <option value="all">Tous les groupes</option>
+              <option value="cellule">Cellule Vidéo</option>
+              <option value="externe">Externes</option>
+            </select>
+          </div>
+          <div id="masterEquipeList"></div>
+        </div>
+
+        <!-- Tab Trousseau -->
+        <div class="master-tab" id="master-tab-trousseau">
+          <div class="master-tab-title">Retriever</div>
+          <p class="master-hint">Ces clés sont ta référence centrale. Chaque app conserve ses propres clés — le Retriever est ton filet de sécurité. Chiffré, synchronisé entre tes deux Macs via GitHub.</p>
+
+          <div class="master-section-title">Intégrations principales</div>
+          <div class="master-key-row">
+            <div class="master-key-info">
+              <div class="master-key-name">Monday.com</div>
+              <div class="master-key-desc">Token API — projets, subitems, colonnes</div>
+            </div>
+            <div class="input-reveal master-key-input">
+              <input class="text-input" type="password" id="keyMonday" placeholder="eyJhbGci..."/>
+              <button class="btn-reveal" type="button" data-target="keyMonday">voir</button>
+            </div>
+          </div>
+          <div class="master-key-row">
+            <div class="master-key-info">
+              <div class="master-key-name">Anthropic</div>
+              <div class="master-key-desc">API Claude — notes de version, assistant</div>
+            </div>
+            <div class="input-reveal master-key-input">
+              <input class="text-input" type="password" id="keyAnthropic" placeholder="sk-ant-..."/>
+              <button class="btn-reveal" type="button" data-target="keyAnthropic">voir</button>
+            </div>
+          </div>
+          <div class="master-key-row">
+            <div class="master-key-info">
+              <div class="master-key-name">Resend</div>
+              <div class="master-key-desc">Email transactionnel — signalements, alertes</div>
+            </div>
+            <div class="input-reveal master-key-input">
+              <input class="text-input" type="password" id="keyResend" placeholder="re_..."/>
+              <button class="btn-reveal" type="button" data-target="keyResend">voir</button>
+            </div>
+          </div>
+          <div class="master-key-row">
+            <div class="master-key-info">
+              <div class="master-key-name">Gofile</div>
+              <div class="master-key-desc">Upload cloud — transfert de fichiers lourds</div>
+            </div>
+            <div class="input-reveal master-key-input">
+              <input class="text-input" type="password" id="keyGofile" placeholder="Token Gofile..."/>
+              <button class="btn-reveal" type="button" data-target="keyGofile">voir</button>
+            </div>
+          </div>
+          <div class="master-key-row">
+            <div class="master-key-info">
+              <div class="master-key-name">GitHub</div>
+              <div class="master-key-desc">Token — sync profils, releases API</div>
+            </div>
+            <div class="input-reveal master-key-input">
+              <input class="text-input" type="password" id="keyGithub" placeholder="ghp_..."/>
+              <button class="btn-reveal" type="button" data-target="keyGithub">voir</button>
+            </div>
+          </div>
+
+          <div class="master-section-title" style="margin-top:24px;">Slots personnalisés</div>
+          <div id="masterCustomKeys"></div>
+          <button class="btn btn-ghost btn-sm" id="btnAddCustomKey" style="margin-top:8px;">+ Ajouter une clé</button>
+
+          <div style="margin-top:24px;">
+            <div style="margin-bottom:12px;">
+              <span class="master-key-desc" id="retrieverSyncInfo">—</span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:16px;">
+              <button class="btn btn-primary btn-sm" id="btnSaveTrousseau">Sauvegarder le trousseau</button>
+              <div class="master-section-title" style="margin-top:4px;">Statut des connexions</div>
+              <div id="retrieverPingList" style="display:flex;flex-direction:column;gap:8px;">
+                <div class="master-ping-row" id="ping-monday"><span class="master-ping-dot" id="ping-dot-monday">●</span><span class="master-ping-name">Monday.com</span><span class="master-ping-latency" id="ping-lat-monday">—</span></div>
+                <div class="master-ping-row" id="ping-github"><span class="master-ping-dot" id="ping-dot-github">●</span><span class="master-ping-name">GitHub</span><span class="master-ping-latency" id="ping-lat-github">—</span></div>
+                <div class="master-ping-row" id="ping-gofile"><span class="master-ping-dot" id="ping-dot-gofile">●</span><span class="master-ping-name">Gofile</span><span class="master-ping-latency" id="ping-lat-gofile">—</span></div>
+                <div class="master-ping-row" id="ping-resend"><span class="master-ping-dot" id="ping-dot-resend">●</span><span class="master-ping-name">Resend</span><span class="master-ping-latency" id="ping-lat-resend">—</span></div>
+                <div class="master-ping-row" id="ping-anthropic"><span class="master-ping-dot" id="ping-dot-anthropic">●</span><span class="master-ping-name">Anthropic</span><span class="master-ping-latency" id="ping-lat-anthropic">—</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab Synchronisation -->
+        <div class="master-tab" id="master-tab-sync">
+          <div class="master-tab-title">Synchronisation</div>
+          <div class="master-sync-status" id="masterSyncStatus">
+            <div class="master-stat-card" style="flex:1">
+              <div class="master-stat-label">Repo</div>
+              <div class="master-stat-value">launcher-profiles</div>
+            </div>
+            <div class="master-stat-card" style="flex:1">
+              <div class="master-stat-label">Dernière sync</div>
+              <div class="master-stat-value" id="masterLastSync">—</div>
+            </div>
+            <div class="master-stat-card" style="flex:1">
+              <div class="master-stat-label">Statut</div>
+              <div class="master-stat-value" id="masterSyncStatut">—</div>
+            </div>
+          </div>
+          <div style="margin-top:20px;display:flex;gap:10px;">
+            <button class="btn btn-primary btn-sm" id="btnForcePush">Pousser vers GitHub</button>
+            <button class="btn btn-ghost btn-sm" id="btnForcePull">Tirer depuis GitHub</button>
+          </div>
+        </div>
+
+        <!-- Tab Système -->
+        <div class="master-tab" id="master-tab-systeme">
+          <div class="master-tab-title">Système</div>
+          <div class="master-system-row">
+            <div>
+              <div class="master-key-name">Mot de passe Admin</div>
+              <div class="master-key-desc">Protège l'accès au Mode Master</div>
+            </div>
+            <button class="btn btn-ghost btn-sm" id="btnChangeAdminPassword">Modifier</button>
+          </div>
+          <div class="master-system-row">
+            <div>
+              <div class="master-key-name">Onboarding</div>
+              <div class="master-key-desc">Rejouer la séquence d'accueil au prochain lancement</div>
+            </div>
+            <button class="btn btn-ghost btn-sm" id="btnResetOnboarding">Réinitialiser</button>
+          </div>
+          <div class="master-system-row">
+            <div>
+              <div class="master-key-name">Fichier lock Admin</div>
+              <div class="master-key-desc">Supprimer ce fichier réinitialise le mot de passe admin</div>
+            </div>
+            <div class="master-stat-value" id="masterLockStatus" style="font-size:11px;">—</div>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </section>

@@ -1,0 +1,15 @@
+# Dépendances
+node_modules/
+
+# Build
+dist/
+
+# macOS
+.DS_Store
+
+# Logs
+*.log
+npm-debug.log*
+
+# Variables d'environnement (clés API, tokens)
+.env
