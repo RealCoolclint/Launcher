@@ -13,3 +13,4 @@ npm-debug.log*
 
 # Variables d'environnement (clés API, tokens)
 .env
+src/renderer/assets/sounds/ambience.mp3
