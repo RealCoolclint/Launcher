@@ -6,7 +6,8 @@ contextBridge.exposeInMainWorld('launcher', {
   getConfig: () => ipcRenderer.invoke('get-config'),
   saveConfig: (config) => ipcRenderer.invoke('save-config', config),
   setLoginItem: (enabled) => ipcRenderer.invoke('set-login-item', enabled),
-  profileSelected: (profile) => ipcRenderer.invoke('profile-selected', profile),
+  profileSelected: (payload) => ipcRenderer.invoke('profile-selected', payload && typeof payload === 'object' && 'profile' in payload ? payload : { profile: payload }),
+  readSession: () => ipcRenderer.invoke('read-session'),
 
   // Lancement des apps
   launchLocal: (appPath) => ipcRenderer.invoke('launch-local', appPath),

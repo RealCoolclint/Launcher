@@ -11,7 +11,7 @@ const APPS_CATALOG = {
     motto: 'Nulla data pereunt', translation: 'Aucune donnée ne se perd.',
     type: 'local', repo: 'RealCoolclint/BackUpFlow',
     patch: 'assets/patches/patch-backupflow.png',
-    appFileName: 'BackUpFlow Studio',
+    appFileName: 'BackUpFlow.app',
     ambiance: 'particles',
     status: 'released',
     tags: ['sauvegarde', 'technique', 'production', 'cellule']
@@ -316,7 +316,8 @@ let state = {
   parallax: { x: 0, y: 0 },
   isAdmin: false,
   pendingAdminProfile: null,
-  ambianceAudio: null
+  ambianceAudio: null,
+  pendingExpiresAfterHours: null
 };
 
 // ── Init ─────────────────────────────────────────────────────────
@@ -641,16 +642,18 @@ async function boot() {
   try {
     const syncResult = await window.launcher.syncProfilesPull();
     if (syncResult.success && syncResult.profiles && syncResult.profiles.length > 0) {
-      // Préserver les rôles locaux — jamais écrasés par GitHub
       const localRoles = {};
       (state.config.profiles || []).forEach(p => {
         if (p.role) localRoles[p.id] = p.role;
       });
-      state.config.profiles = syncResult.profiles.map(p => {
+      const remoteIds = new Set(syncResult.profiles.map(p => p.id));
+      const localOnly = (state.config.profiles || []).filter(p => p.id && !remoteIds.has(p.id));
+      const mergedRemote = syncResult.profiles.map(p => {
         const jobRole = (p.jobRole && JOBROLE_MIGRATION[p.jobRole]) ? JOBROLE_MIGRATION[p.jobRole] : p.jobRole;
         const seenApps = Array.isArray(p.seenApps) ? p.seenApps : [];
         return { ...p, ...(jobRole ? { jobRole } : {}), ...(localRoles[p.id] ? { role: localRoles[p.id] } : {}), seenApps };
       });
+      state.config.profiles = [...mergedRemote, ...localOnly];
       await saveConfig();
     }
   } catch {}
@@ -661,8 +664,83 @@ async function boot() {
     return;
   }
 
-  showScreen('profiles');
-  renderProfiles();
+  await showLoginScreen();
+}
+
+async function showLoginScreen() {
+  const result = await window.launcher.readSession();
+
+  if (result.valid) {
+    // Session active — afficher "Continuer en tant que"
+    const profileId = result.session.profileId;
+    const profile = (state.config.profiles || []).find(p => p.id === profileId);
+    if (profile) {
+      const avatarEl = document.getElementById('login-avatar');
+      avatarEl.innerHTML = profile.avatar
+        ? `<img class="profile-avatar-img" src="${profile.avatar}" alt="${profile.firstName}"/>`
+        : `<div class="profile-initials">${(profile.firstName?.[0]||'').toUpperCase()}${(profile.lastName?.[0]||'').toUpperCase()}</div>`;
+      document.getElementById('login-greeting').textContent = `Bonjour, ${profile.firstName}`;
+      document.getElementById('login-resume').style.display = 'block';
+      document.getElementById('login-select').style.display = 'none';
+
+      document.getElementById('btn-login-continue').onclick = () => selectProfile(profile);
+      document.getElementById('btn-login-switch').onclick = () => {
+        document.getElementById('login-resume').style.display = 'none';
+        document.getElementById('login-select').style.display = 'block';
+        renderLoginProfiles();
+      };
+
+      showScreen('login');
+      return;
+    }
+  }
+
+  // Pas de session valide — afficher la sélection de profil
+  document.getElementById('login-resume').style.display = 'none';
+  document.getElementById('login-select').style.display = 'block';
+  renderLoginProfiles();
+  showScreen('login');
+}
+
+function renderLoginProfiles() {
+  const grid = document.getElementById('loginProfilesGrid');
+  grid.innerHTML = '';
+  (state.config.profiles || []).forEach(profile => {
+    const card = document.createElement('div');
+    card.className = 'profile-card';
+    const avatarHtml = profile.avatar
+      ? `<img class="profile-avatar-img" src="${profile.avatar}" alt="${profile.firstName}"/>`
+      : `<div class="profile-initials">${(profile.firstName?.[0]||'').toUpperCase()}${(profile.lastName?.[0]||'').toUpperCase()}</div>`;
+    card.innerHTML = `
+      <div class="profile-avatar">${avatarHtml}</div>
+      <div class="profile-name">${profile.firstName} ${profile.lastName}</div>
+      <div class="profile-email">${profile.email || ''}</div>`;
+    card.addEventListener('click', () => openLoginModal(profile));
+    grid.appendChild(card);
+  });
+}
+
+function openLoginModal(profile) {
+  const avatarEl = document.getElementById('modalLoginAvatar');
+  avatarEl.innerHTML = profile.avatar
+    ? `<img class="profile-avatar-img" src="${profile.avatar}" alt="${profile.firstName}" style="width:56px;height:56px;border-radius:50%;object-fit:cover;"/>`
+    : `<div class="profile-initials" style="width:56px;height:56px;font-size:20px;">${(profile.firstName?.[0]||'').toUpperCase()}${(profile.lastName?.[0]||'').toUpperCase()}</div>`;
+
+  document.getElementById('modalLogin').classList.add('open');
+
+  document.getElementById('btnLoginShared').onclick = () => {
+    document.getElementById('modalLogin').classList.remove('open');
+    state.pendingExpiresAfterHours = 8;
+    selectProfile(profile);
+  };
+  document.getElementById('btnLoginPersonal').onclick = () => {
+    document.getElementById('modalLogin').classList.remove('open');
+    state.pendingExpiresAfterHours = 720;
+    selectProfile(profile);
+  };
+  document.getElementById('modalLoginClose').onclick = () => {
+    document.getElementById('modalLogin').classList.remove('open');
+  };
 }
 
 // ── Navigation ───────────────────────────────────────────────────
@@ -671,9 +749,14 @@ function showScreen(name) {
   document.getElementById('screen-profiles').classList.remove('active');
   document.getElementById('screen-dashboard').classList.remove('active');
   document.getElementById('screen-master').classList.remove('active');
+  document.getElementById('screen-login').classList.remove('active');
   if (name === 'onboarding') document.getElementById('screen-onboarding').classList.add('active');
   else if (name === 'profiles') {
     document.getElementById('screen-profiles').classList.add('active');
+    startAmbianceAudio();
+  }
+  else if (name === 'login') {
+    document.getElementById('screen-login').classList.add('active');
     startAmbianceAudio();
   }
   else if (name === 'dashboard') document.getElementById('screen-dashboard').classList.add('active');
@@ -777,7 +860,8 @@ async function selectProfile(profile) {
     logins[profile.id] = new Date().toISOString();
     localStorage.setItem('tq_last_logins', JSON.stringify(logins));
   }
-  window.launcher.profileSelected(profile);
+  window.launcher.profileSelected({ profile, expiresAfterHours: state.pendingExpiresAfterHours || 8 });
+  state.pendingExpiresAfterHours = null;
   logEvent('PROFIL', `Connexion — ${profile.firstName} ${profile.lastName}`);
   document.getElementById('greetingName').textContent = profile.firstName;
   showScreen('dashboard');
@@ -2778,9 +2862,8 @@ document.getElementById('btn-sound-toggle').addEventListener('click', () => {
   }
 });
 document.getElementById('btnProfiles').addEventListener('click', () => {
-  window.launcher.profileSelected(null);
-  showScreen('profiles');
-  renderProfiles();
+  window.launcher.profileSelected({ profile: null });
+  showLoginScreen();
 });
 document.getElementById('btnQuit').addEventListener('click', () => window.launcher.quitApp());
 

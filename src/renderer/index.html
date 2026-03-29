@@ -123,6 +123,34 @@
     </div>
   </section>
 
+  <!-- Login -->
+  <section id="screen-login">
+    <div class="profiles-container">
+
+      <!-- Vue : session valide → Continuer -->
+      <div id="login-resume" style="display:none;">
+        <div class="profile-avatar" id="login-avatar" style="margin:0 auto 16px;"></div>
+        <h1 class="profiles-title" id="login-greeting">Bonjour —</h1>
+        <p class="profiles-subtitle">Ta session est active. Reprends là où tu t'es arrêté.</p>
+        <button class="btn btn-primary" id="btn-login-continue" style="width:100%;margin-top:8px;">Continuer</button>
+        <button class="btn btn-ghost btn-sm" id="btn-login-switch" style="margin-top:12px;width:100%;">Changer de profil</button>
+      </div>
+
+      <!-- Vue : pas de session → sélection profil -->
+      <div id="login-select" style="display:none;">
+        <h1 class="profiles-title">Bienvenue</h1>
+        <p class="profiles-subtitle">Sélectionne ton profil pour accéder à la suite.</p>
+        <div class="profiles-grid" id="loginProfilesGrid"></div>
+        <div style="margin-top:16px;">
+          <label class="field-label" style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;">
+            <input type="checkbox" id="login-remember"/> Rester connecté 30 jours
+          </label>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
   <!-- Dashboard -->
   <section id="screen-dashboard">
     <main class="app-main">
@@ -872,6 +900,30 @@
         <div class="diag-row" id="diag-anthropic"><span class="master-ping-dot" id="diag-dot-anthropic">●</span><span class="master-ping-name">Anthropic</span><span class="master-ping-latency" id="diag-lat-anthropic">—</span></div>
       </div>
       <div id="diagnosticSummary" style="margin-top:16px;font-size:12px;color:var(--text-tertiary);">—</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Modale Connexion ──────────────────────────────────── -->
+<div class="modal-overlay" id="modalLogin">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Connexion</span>
+      <button class="modal-close" id="modalLoginClose">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="modalLoginAvatar" style="display:flex;justify-content:center;margin-bottom:16px;"></div>
+      <p style="font-size:13px;color:var(--text-secondary);text-align:center;line-height:1.7;margin-bottom:20px;">
+        Sur quel Mac travailles-tu ?
+      </p>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <button class="btn btn-primary" id="btnLoginShared" style="width:100%;">
+          Mac partagé — session 8 heures
+        </button>
+        <button class="btn btn-ghost" id="btnLoginPersonal" style="width:100%;">
+          Mon Mac — rester connecté 30 jours
+        </button>
+      </div>
     </div>
   </div>
 </div>

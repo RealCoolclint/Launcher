@@ -47,6 +47,12 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Au-dessus du canvas cosmos (z-index 0) pour que les écrans soient visibles */
+#app {
+  position: relative;
+  z-index: 2;
+}
+
 /* ── Canvas cosmos ───────────────────────────────────────── */
 #cosmosCanvas {
   position: fixed;
@@ -532,6 +538,23 @@ body {
 }
 
 #screen-profiles.active { display: flex; }
+
+#screen-login {
+  display: none;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+  background: rgba(5, 11, 24, 0.85);
+  position: relative;
+  z-index: 5;
+}
+
+#screen-login.active {
+  display: flex;
+}
 
 .profiles-container { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100%; width: 100%; max-width: 860px; text-align: center; }
 .profiles-title { font-family: 'Lato', sans-serif; font-size: 24px; font-weight: 900; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 8px; }

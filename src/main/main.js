@@ -11,6 +11,7 @@ const ConfigManager = require('./config-manager');
 const GithubSync = require('./github-sync');
 const Updater = require('./updater');
 const Retriever = require('./retriever');
+const { writeLauncherSession, deleteLauncherSession } = require('./session-writer');
 
 const PLAN_DIRECTEUR_PATH = '/Volumes/BACKUP PRO/Outils/App Persos/Plan-Directeur/TRANQUILITY_PLAN_DIRECTEUR.md';
 const PLAN_DIRECTEUR_DIR = path.dirname(PLAN_DIRECTEUR_PATH);
@@ -115,9 +116,27 @@ app.whenReady().then(() => {
   createTray();
 });
 
-app.on('before-quit', () => {
+app.on('before-quit', async () => {
+  const os = require('os');
+  const SESSION_PATH = path.join(os.homedir(), 'Library', 'Application Support', 'tranquility-suite', 'session.json');
+  try {
+    if (fs.existsSync(SESSION_PATH)) {
+      const raw = fs.readFileSync(SESSION_PATH, 'utf-8');
+      const session = JSON.parse(raw);
+      if ((session.expiresAfterHours || 8) < 720) {
+        await deleteLauncherSession();
+      }
+    }
+  } catch {
+    await deleteLauncherSession();
+  }
   stopPlanDirecteurWatch();
   if (tray) tray.destroy();
+  if (mainWindow) mainWindow.removeAllListeners('close');
+});
+
+app.on('window-all-closed', () => {
+  app.quit();
 });
 
 app.on('activate', () => {
@@ -139,11 +158,35 @@ ipcMain.handle('set-login-item', async (event, enabled) => {
   return { success: true };
 });
 
-ipcMain.handle('profile-selected', async (event, profile) => {
+ipcMain.handle('profile-selected', async (event, { profile, expiresAfterHours = 8 } = {}) => {
   console.log('[Plan Directeur] profile-selected reçu :', profile ? profile.role : 'null');
   const isPrivileged = profile && (profile.role === 'admin' || profile.role === 'co-admin');
   if (isPrivileged) startPlanDirecteurWatch();
   else stopPlanDirecteurWatch();
+  if (profile) {
+    const config = await ConfigManager.read();
+    const allProfiles = (config.profiles || []).filter(p => !p.archived);
+    const apiKeys = config.apiKeys || {};
+    // Enrichir le profil avec appSettings depuis config.json (source de vérité)
+    const fullProfile = allProfiles.find(p => p.id === profile.id) || profile;
+    await writeLauncherSession(fullProfile, apiKeys, expiresAfterHours, allProfiles);
+  }
+});
+
+ipcMain.handle('read-session', async () => {
+  const os = require('os');
+  const SESSION_PATH = path.join(os.homedir(), 'Library', 'Application Support', 'tranquility-suite', 'session.json');
+  try {
+    if (!fs.existsSync(SESSION_PATH)) return { valid: false, reason: 'no-file' };
+    const raw = fs.readFileSync(SESSION_PATH, 'utf-8');
+    const session = JSON.parse(raw);
+    const writtenAt = new Date(session.writtenAt).getTime();
+    const expiresMs = (session.expiresAfterHours || 8) * 3600 * 1000;
+    if (Date.now() > writtenAt + expiresMs) return { valid: false, reason: 'expired' };
+    return { valid: true, session };
+  } catch (e) {
+    return { valid: false, reason: 'error', error: e.message };
+  }
 });
 
 // ─── IPC : Lancement apps ─────────────────────────────────────────────────────
