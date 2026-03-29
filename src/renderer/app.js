@@ -873,7 +873,6 @@ async function selectProfile(profile) {
   document.querySelector('.section-title').classList.add('anim-section');
   renderDashboard();
   checkAllUpdates();
-  setTimeout(() => updateHeaderUpdateBadge(2), 2000);
 }
 
 // ── Modal profil ─────────────────────────────────────────────────
@@ -1149,7 +1148,7 @@ function renderAppActionBtn(key) {
   if (update?.dmgUrl) {
     return `<button class="app-launch-btn btn-download-app" data-key="${key}">↓ Télécharger</button>`;
   }
-  return `<button class="app-launch-btn btn-locate-app" data-key="${key}">Localiser</button>`;
+  return `<button class="app-launch-btn btn-locate-app" data-key="${key}">Installer</button>`;
 }
 
 async function setupApp(key) {
@@ -1335,8 +1334,8 @@ async function launchApp(key) {
 // MISES À JOUR
 // ════════════════════════════════════════════════════════════════
 const APPS_UPDATE_DEFAULTS = {
-  backupflow:  { repo: 'RealCoolclint/BackUpFlow',   currentVersion: 'v1.5.0' },
-  transporter: { repo: 'RealCoolclint/Transporter',  currentVersion: 'v1.19.03.26' },
+  backupflow:  { repo: 'RealCoolclint/BackUpFlow',   currentVersion: 'v1.29.03.26' },
+  transporter: { repo: 'RealCoolclint/Transporter',  currentVersion: 'v1.29.03.26' },
   reviewer:    { repo: 'RealCoolclint/Reviewer',     currentVersion: null },
   manifest:    { repo: 'RealCoolclint/EasyCallSheet', currentVersion: null }
 };
@@ -1513,7 +1512,7 @@ async function openAppModal(key) {
       mActionBtn.textContent = '↓ Télécharger';
       mActionBtn.className = 'm-btn m-btn-primary';
     } else {
-      mActionBtn.textContent = 'Localiser';
+      mActionBtn.textContent = 'Installer';
       mActionBtn.className = 'm-btn m-btn-secondary';
     }
   }
@@ -1600,6 +1599,44 @@ document.getElementById('mUninstallBtn').addEventListener('click', async () => {
   } else {
     showToast(`Erreur : ${result.error}`, 'danger');
   }
+});
+
+document.getElementById('mPathModifyBtn').addEventListener('click', async (e) => {
+  e.stopPropagation();
+  const key = state.currentModalApp;
+  if (!key) return;
+  await setupApp(key);
+  const app = APPS_CATALOG[key];
+  document.getElementById('mPath').textContent = state.config.apps?.[key]?.path || 'Non configuré';
+});
+
+document.getElementById('mDocBtn').addEventListener('click', (e) => {
+  e.stopPropagation();
+  const key = state.currentModalApp;
+  if (!key) return;
+  const app = APPS_CATALOG[key];
+  const url = app.type === 'web' ? app.url : `https://github.com/${app.repo}`;
+  if (url) window.launcher.openUrl(url);
+});
+
+document.getElementById('mChangelogBtn').addEventListener('click', (e) => {
+  e.stopPropagation();
+  const key = state.currentModalApp;
+  if (!key) return;
+  const app = APPS_CATALOG[key];
+  window.launcher.openUrl(`https://github.com/${app.repo}/releases`);
+});
+
+document.getElementById('mFavBtn').addEventListener('click', async (e) => {
+  e.stopPropagation();
+  const key = state.currentModalApp;
+  if (!key) return;
+  await toggleFavorite(key);
+  const isFav = (state.currentProfile?.favorites || []).includes(key);
+  const btn = document.getElementById('mFavBtn');
+  btn.classList.toggle('active', isFav);
+  btn.title = isFav ? 'Retirer des favoris' : 'Ajouter aux favoris';
+  renderDashboard();
 });
 
 function renderModalTabs(activeKey) {
@@ -2435,6 +2472,9 @@ function renderMasterEquipe() {
   const filterGroup = document.getElementById('masterFilterGroup')?.value || 'all';
 
   (state.config.profiles || []).forEach(profile => {
+    profile = migrateProfileToPasseport(profile);
+    if (profile.status === 'archived' && filterGroup !== 'archived') return;
+    if (filterGroup === 'archived' && profile.status !== 'archived') return;
     if (filterGroup === 'cellule' && profile.group === 'externe') return;
     if (filterGroup === 'externe' && profile.group !== 'externe') return;
 
@@ -2444,13 +2484,35 @@ function renderMasterEquipe() {
       `<option value="${r}" ${profile.jobRole === r ? 'selected' : ''}>${r}</option>`
     ).join('');
 
+    const statusBadge = {
+      active: '<span style="font-size:10px;padding:2px 8px;border-radius:99px;background:rgba(34,197,94,0.15);color:#22c55e;font-weight:600;">ACTIF</span>',
+      pending: '<span style="font-size:10px;padding:2px 8px;border-radius:99px;background:rgba(245,158,11,0.15);color:#f59e0b;font-weight:600;">EN ATTENTE</span>',
+      archived: '<span style="font-size:10px;padding:2px 8px;border-radius:99px;background:rgba(255,255,255,0.08);color:#888;font-weight:600;">ARCHIVÉ</span>'
+    }[profile.status || 'active'];
+
+    const actionButtons = `
+    <button class="btn btn-ghost btn-sm btn-edit-profile" data-profile-id="${profile.id}">Modifier</button>
+    ${profile.status !== 'archived'
+      ? `<button class="btn btn-ghost btn-sm btn-archive-profile" data-profile-id="${profile.id}">Archiver</button>`
+      : `<button class="btn btn-ghost btn-sm btn-restore-profile" data-profile-id="${profile.id}">Rétablir</button>`
+    }
+    ${profile.status === 'pending'
+      ? `<button class="btn btn-primary btn-sm btn-activate-profile" data-profile-id="${profile.id}">Activer</button>`
+      : ''
+    }
+    ${profile.id !== 'p_1773999409329'
+      ? `<button class="btn btn-danger btn-sm btn-delete-profile" data-profile-id="${profile.id}">Supprimer</button>`
+      : ''
+    }
+  `;
+
     const row = document.createElement('div');
     row.className = 'master-equipe-row';
     row.innerHTML = `
-      <div class="master-equipe-avatar">${profile.firstName[0]}${profile.lastName[0]}</div>
+      <div class="master-equipe-avatar">${profile.identity.initiales || (profile.identity.firstName[0] + profile.identity.lastName[0])}</div>
       <div class="master-equipe-info">
-        <div class="master-key-name">${profile.firstName} ${profile.lastName}</div>
-        <div class="master-key-desc">${profile.email || '—'}</div>
+        <div class="master-key-name" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">${profile.identity.firstName} ${profile.identity.lastName} ${statusBadge}</div>
+        <div class="master-key-desc">${profile.identity.email || '—'}</div>
         <div class="master-key-age" style="margin-top:3px;">${(() => {
           const logins = JSON.parse(localStorage.getItem('tq_last_logins') || '{}');
           const ts = logins[profile.id];
@@ -2477,9 +2539,9 @@ function renderMasterEquipe() {
         ${roleOptions}
       </select>
       <select class="master-select" data-id="${profile.id}" data-type="role">
-        <option value="user"     ${(!profile.role || profile.role === 'user')     ? 'selected' : ''}>Utilisateur</option>
-        <option value="co-admin" ${profile.role === 'co-admin' ? 'selected' : ''}>Co-Admin</option>
-        <option value="admin"    ${profile.role === 'admin'    ? 'selected' : ''} ${profile.role !== 'admin' ? 'disabled' : ''}>Admin</option>
+        <option value="user"     ${(!profile.identity.role || profile.identity.role === 'user')     ? 'selected' : ''}>Utilisateur</option>
+        <option value="co-admin" ${profile.identity.role === 'co-admin' ? 'selected' : ''}>Co-Admin</option>
+        <option value="admin"    ${profile.identity.role === 'admin'    ? 'selected' : ''} ${profile.identity.role !== 'admin' ? 'disabled' : ''}>Admin</option>
       </select>
       <div class="master-system-row" style="width:100%;padding:8px 0 0;">
         <div>
@@ -2503,7 +2565,7 @@ function renderMasterEquipe() {
           </div>`).join('')}
       </div>
       <button class="btn btn-ghost btn-sm btn-save-profile-role" data-id="${profile.id}">Enregistrer</button>
-      ${profile.id !== 'p_1773999409329' ? `<button class="btn btn-danger btn-sm btn-delete-profile" data-profile-id="${profile.id}">Supprimer</button>` : ''}`;
+      ${actionButtons}`;
 
     row.querySelector('.btn-save-profile-role').addEventListener('click', async () => {
       const p = state.config.profiles.find(p => p.id === profile.id);
@@ -2512,14 +2574,19 @@ function renderMasterEquipe() {
       selects.forEach(sel => {
         if (sel.dataset.type === 'group')   p.group   = sel.value;
         if (sel.dataset.type === 'jobrole') p.jobRole = sel.value;
-        if (sel.dataset.type === 'role' && p.role !== 'admin') p.role = sel.value;
+        if (sel.dataset.type === 'role' && p.role !== 'admin') {
+          p.role = sel.value;
+          if (!p.identity) p.identity = {};
+          p.identity.role = p.role;
+        }
       });
       // Sauvegarder les permissions custom
       const permSelects = row.querySelectorAll('[data-perm]');
       if (!p.appPermissions) p.appPermissions = {};
       permSelects.forEach(sel => { p.appPermissions[sel.dataset.perm] = sel.value; });
+      p.updatedAt = new Date().toISOString();
       await saveConfig();
-      showToast(`Profil ${p.firstName} mis à jour.`, 'success');
+      showToast(`Profil ${p.identity.firstName} mis à jour.`, 'success');
     });
 
     row.querySelector('.btn-set-dmg-folder').addEventListener('click', async () => {
@@ -2553,24 +2620,87 @@ function renderMasterEquipe() {
   // Délégation pour .btn-delete-profile (boutons générés dynamiquement)
   list.onclick = async (e) => {
     const btn = e.target.closest('.btn-delete-profile');
-    if (!btn) return;
-    const profileId = btn.dataset.profileId;
-    const profile = state.config.profiles.find(p => p.id === profileId);
-    if (!profile) return;
-    const card = btn.closest('.master-equipe-row');
-    const confirm = await window.launcher.showMessageBox({
-      type: 'warning',
-      buttons: ['Annuler', 'Supprimer'],
-      defaultId: 0,
-      title: 'Supprimer le profil',
-      message: `Supprimer ${profile.firstName} ${profile.lastName} ? Cette action est irréversible.`
-    });
-    if (confirm.response !== 1) return;
-    window.launcher.deleteProfile(profileId);
-    card?.remove();
-    state.config.profiles = state.config.profiles.filter(p => p.id !== profileId);
-    showToast('Profil supprimé');
+    if (btn) {
+      const profileId = btn.dataset.profileId;
+      const profile = state.config.profiles.find(p => p.id === profileId);
+      if (!profile) return;
+      const card = btn.closest('.master-equipe-row');
+      const confirm = await window.launcher.showMessageBox({
+        type: 'warning',
+        buttons: ['Annuler', 'Supprimer'],
+        defaultId: 0,
+        title: 'Supprimer le profil',
+        message: `Supprimer ${profile.identity.firstName} ${profile.identity.lastName} ? Cette action est irréversible.`
+      });
+      if (confirm.response !== 1) return;
+      window.launcher.deleteProfile(profileId);
+      card?.remove();
+      state.config.profiles = state.config.profiles.filter(p => p.id !== profileId);
+      showToast('Profil supprimé');
+      return;
+    }
+
+    const btnArchive = e.target.closest('.btn-archive-profile');
+    if (btnArchive) {
+      const profileId = btnArchive.dataset.profileId;
+      const p = state.config.profiles.find(p => p.id === profileId);
+      if (!p) return;
+      p.status = 'archived';
+      p.updatedAt = new Date().toISOString();
+      await saveConfig();
+      await sendProfileAlert('profile-archived', p);
+      showToast(`${p.identity?.firstName || p.firstName} archivé·e.`, 'info');
+      renderMasterEquipe();
+      return;
+    }
+
+    const btnRestore = e.target.closest('.btn-restore-profile');
+    if (btnRestore) {
+      const profileId = btnRestore.dataset.profileId;
+      const p = state.config.profiles.find(p => p.id === profileId);
+      if (!p) return;
+      p.status = 'active';
+      p.updatedAt = new Date().toISOString();
+      await saveConfig();
+      showToast(`${p.identity?.firstName || p.firstName} rétabli·e.`, 'success');
+      renderMasterEquipe();
+      return;
+    }
+
+    const btnActivate = e.target.closest('.btn-activate-profile');
+    if (btnActivate) {
+      const profileId = btnActivate.dataset.profileId;
+      const p = state.config.profiles.find(p => p.id === profileId);
+      if (!p) return;
+      p.status = 'active';
+      p.updatedAt = new Date().toISOString();
+      await saveConfig();
+      await sendProfileAlert('profile-activated', p);
+      showToast(`${p.identity?.firstName || p.firstName} activé·e.`, 'success');
+      renderMasterEquipe();
+      return;
+    }
+
+    const btnEdit = e.target.closest('.btn-edit-profile');
+    if (btnEdit) {
+      const profileId = btnEdit.dataset.profileId;
+      const p = state.config.profiles.find(p => p.id === profileId);
+      if (!p) return;
+      openEditProfileModal(p);
+      return;
+    }
   };
+
+  const toolbar = document.querySelector('.master-equipe-toolbar');
+  if (toolbar && !document.getElementById('btnCreateProfile')) {
+    const createBtn = document.createElement('button');
+    createBtn.id = 'btnCreateProfile';
+    createBtn.className = 'btn btn-primary btn-sm';
+    createBtn.textContent = '+ Créer un profil';
+    createBtn.style.marginLeft = 'auto';
+    toolbar.appendChild(createBtn);
+    createBtn.addEventListener('click', () => openCreateProfileModal());
+  }
 
   document.getElementById('masterFilterGroup').onchange = renderMasterEquipe;
 
@@ -2592,11 +2722,13 @@ function renderMasterEquipe() {
         if (sel.dataset.type === 'group')   p.group   = sel.value;
         if (sel.dataset.type === 'jobrole') p.jobRole = sel.value;
         if (sel.dataset.type === 'role' && p.role !== 'admin') p.role = sel.value;
+        if (p.identity) p.identity.role = p.role;
       });
       row.querySelectorAll('[data-perm]').forEach(sel => {
         if (!p.appPermissions) p.appPermissions = {};
         p.appPermissions[sel.dataset.perm] = sel.value;
       });
+      p.updatedAt = new Date().toISOString();
     });
     await saveConfig();
     showToast('Équipe enregistrée.', 'success');
@@ -2622,6 +2754,147 @@ function renderMasterEquipe() {
     elInactive.textContent = String(inactive);
     elInactive.style.color = inactive > 0 ? 'var(--warning, #e0a052)' : 'inherit';
   }
+}
+
+async function sendProfileAlert(eventType, profile) {
+  try {
+    const keys = await window.launcher.getKeys();
+    const apiKey = keys?.success ? (keys.keys?.resend || '') : '';
+    if (!apiKey) return;
+    const adminEmail = 'mpavloff@letudiant.fr';
+    const profileName  = `${profile.identity?.firstName || ''} ${profile.identity?.lastName || ''}`.trim();
+    const profileEmail = profile.identity?.email || '';
+    await window.launcher.sendProfileAlert({ event: eventType, profileName, profileEmail, adminEmail, apiKey });
+  } catch (e) {
+    console.warn('sendProfileAlert failed:', e);
+  }
+}
+
+function openCreateProfileModal() {
+  const existing = document.getElementById('modalCreateProfile');
+  if (existing) existing.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'modalCreateProfile';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center;';
+  modal.innerHTML = `
+    <div class="modal" style="max-width:420px;width:100%;">
+      <div class="modal-header">
+        <span class="modal-title">Créer un profil</span>
+        <button class="modal-close" id="btnCloseCreateProfile">✕</button>
+      </div>
+      <div class="modal-body" style="padding:24px;display:flex;flex-direction:column;gap:14px;">
+        <div class="field-group">
+          <label class="field-label">Prénom *</label>
+          <input class="text-input" type="text" id="cpFirstName" placeholder="ex : Alan"/>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Nom *</label>
+          <input class="text-input" type="text" id="cpLastName" placeholder="ex : Shepard"/>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Email</label>
+          <input class="text-input" type="email" id="cpEmail" placeholder="ex : alan@letudiant.fr"/>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Rôle</label>
+          <select class="master-select" id="cpRole">
+            <option value="user">Utilisateur</option>
+            <option value="co-admin">Co-Admin</option>
+          </select>
+        </div>
+        <p style="font-size:11px;color:var(--text-tertiary);line-height:1.6;">Le profil sera créé en statut <strong>En attente</strong>. Tu pourras l'activer depuis l'onglet Équipe.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" id="btnCancelCreateProfile">Annuler</button>
+        <button class="btn btn-primary" id="btnConfirmCreateProfile">Créer le profil</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  document.getElementById('btnCloseCreateProfile').onclick = () => modal.remove();
+  document.getElementById('btnCancelCreateProfile').onclick = () => modal.remove();
+  document.getElementById('btnConfirmCreateProfile').onclick = async () => {
+    const firstName = document.getElementById('cpFirstName').value.trim();
+    const lastName  = document.getElementById('cpLastName').value.trim();
+    const email     = document.getElementById('cpEmail').value.trim();
+    const role      = document.getElementById('cpRole').value;
+    if (!firstName || !lastName) { showToast('Prénom et nom obligatoires.', 'warning'); return; }
+    const newProfile = createProfileObject(firstName, lastName, email, role);
+    state.config.profiles.push(newProfile);
+    await saveConfig();
+    await sendProfileAlert('profile-created', newProfile);
+    modal.remove();
+    showToast(`Profil ${firstName} créé — en attente d'activation.`, 'success');
+    renderMasterEquipe();
+  };
+}
+
+function openEditProfileModal(profile) {
+  profile = migrateProfileToPasseport(profile);
+  const existing = document.getElementById('modalEditProfile');
+  if (existing) existing.remove();
+
+  const id = profile.identity;
+  const modal = document.createElement('div');
+  modal.id = 'modalEditProfile';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center;';
+  modal.innerHTML = `
+    <div class="modal" style="max-width:420px;width:100%;">
+      <div class="modal-header">
+        <span class="modal-title">Modifier le profil</span>
+        <button class="modal-close" id="btnCloseEditProfile">✕</button>
+      </div>
+      <div class="modal-body" style="padding:24px;display:flex;flex-direction:column;gap:14px;">
+        <div class="field-group">
+          <label class="field-label">Prénom *</label>
+          <input class="text-input" type="text" id="epFirstName" value="${id.firstName || ''}"/>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Nom *</label>
+          <input class="text-input" type="text" id="epLastName" value="${id.lastName || ''}"/>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Email</label>
+          <input class="text-input" type="email" id="epEmail" value="${id.email || ''}"/>
+        </div>
+        <div class="field-group">
+          <label class="field-label">ID Monday</label>
+          <input class="text-input" type="text" id="epMondayId" value="${id.mondayUserId || ''}" placeholder="ex : 67082975"/>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Couleur de profil</label>
+          <input type="color" id="epColor" value="${id.color || '#2563eb'}" style="width:48px;height:32px;border:none;background:none;cursor:pointer;"/>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" id="btnCancelEditProfile">Annuler</button>
+        <button class="btn btn-primary" id="btnConfirmEditProfile">Enregistrer</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  document.getElementById('btnCloseEditProfile').onclick = () => modal.remove();
+  document.getElementById('btnCancelEditProfile').onclick = () => modal.remove();
+  document.getElementById('btnConfirmEditProfile').onclick = async () => {
+    const firstName = document.getElementById('epFirstName').value.trim();
+    const lastName  = document.getElementById('epLastName').value.trim();
+    if (!firstName || !lastName) { showToast('Prénom et nom obligatoires.', 'warning'); return; }
+    profile.identity.firstName   = firstName;
+    profile.identity.lastName    = lastName;
+    profile.identity.email       = document.getElementById('epEmail').value.trim();
+    profile.identity.mondayUserId = document.getElementById('epMondayId').value.trim();
+    profile.identity.color       = document.getElementById('epColor').value;
+    profile.identity.initiales   = (firstName[0] + lastName[0]).toUpperCase();
+    profile.updatedAt = new Date().toISOString();
+    await saveConfig();
+    await sendProfileAlert('profile-edited', profile);
+    modal.remove();
+    showToast(`Profil ${firstName} mis à jour.`, 'success');
+    renderMasterEquipe();
+  };
 }
 
 function renderCustomKeys() {
@@ -2870,18 +3143,63 @@ document.getElementById('btnQuit').addEventListener('click', () => window.launch
 // ════════════════════════════════════════════════════════════════
 // HELPERS
 // ════════════════════════════════════════════════════════════════
-function createProfileObject(firstName, lastName, email) {
+function createProfileObject(firstName, lastName, email, role = 'user') {
   return {
     id: `p_${Date.now()}`,
-    firstName,
-    lastName,
-    email,
+    status: 'pending',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    identity: {
+      firstName,
+      lastName,
+      email: email || '',
+      role,
+      avatar: '',
+      initiales: (firstName[0] + lastName[0]).toUpperCase(),
+      color: '#2563eb',
+      mondayUserId: ''
+    },
+    appSettings: {
+      backupflow: {
+        ssdPersoPath: '',
+        ssdStudioPath: '',
+        mondayMode: 'offline',
+        zipNasEnabled: false
+      },
+      transporter: {
+        defaultDestination: '',
+        mondayMode: 'offline'
+      }
+    },
     favorites: [],
     seenApps: [],
     soundEnabled: true,
     settings: { ...DEFAULT_PROFILE_SETTINGS },
-    createdAt: new Date().toISOString()
   };
+}
+
+function migrateProfileToPasseport(p) {
+  if (!p.identity) {
+    p.identity = {
+      firstName: p.firstName || '',
+      lastName: p.lastName || '',
+      email: p.email || '',
+      role: p.role || 'user',
+      avatar: p.avatar || p.photoPath || '',
+      initiales: p.initiales || ((p.firstName?.[0] || '') + (p.lastName?.[0] || '')).toUpperCase(),
+      color: p.color || '#2563eb',
+      mondayUserId: p.mondayUserId || ''
+    };
+  }
+  if (!p.appSettings) {
+    p.appSettings = {
+      backupflow: { ssdPersoPath: '', ssdStudioPath: '', mondayMode: 'offline', zipNasEnabled: false },
+      transporter: { defaultDestination: '', mondayMode: 'offline' }
+    };
+  }
+  if (!p.status) p.status = 'active';
+  if (!p.updatedAt) p.updatedAt = new Date().toISOString();
+  return p;
 }
 
 async function saveConfig() {

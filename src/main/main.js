@@ -488,6 +488,55 @@ ipcMain.handle('send-bug-report', async (event, { profileName, message, apiKey }
   }
 });
 
+ipcMain.handle('send-profile-alert', async (ipcEvent, { event: alertEvent, profileName, profileEmail, adminEmail, apiKey }) => {
+  const key = apiKey != null && String(apiKey).trim() !== '' ? String(apiKey).trim() : '';
+  if (!key) return { success: false, reason: 'no-key' };
+
+  const { Resend } = require('resend');
+  const resend = new Resend(key);
+
+  const templates = {
+    'profile-created': {
+      to: adminEmail,
+      subject: `[Tranquility] Nouveau profil créé — ${profileName}`,
+      text: `Un nouveau profil a été créé pour ${profileName} (${profileEmail}). Il est en attente d'activation dans le MASTER Équipe.`
+    },
+    'profile-edited': {
+      to: adminEmail,
+      subject: `[Tranquility] Profil modifié — ${profileName}`,
+      text: `Le profil de ${profileName} (${profileEmail}) a été modifié.`
+    },
+    'profile-activated': {
+      to: profileEmail,
+      subject: '[Tranquility] Ton profil est activé',
+      text: `Bonjour ${profileName}, ton profil Tranquility Suite est maintenant actif. Tu peux te connecter depuis Launcher.`
+    },
+    'profile-archived': {
+      to: profileEmail,
+      subject: `[Tranquility] Profil archivé — ${profileName}`,
+      text: `Le profil de ${profileName} a été archivé. Contacte l'admin pour toute question.`
+    }
+  };
+
+  const tpl = templates[alertEvent];
+  if (!tpl || !tpl.to) {
+    return { success: false, reason: 'invalid-payload' };
+  }
+
+  try {
+    await resend.emails.send({
+      from: 'Tranquility <onboarding@resend.dev>',
+      to: tpl.to,
+      subject: tpl.subject,
+      text: tpl.text
+    });
+    return { success: true };
+  } catch (err) {
+    console.log('[send-profile-alert] erreur:', err.message);
+    return { success: false, reason: err.message || 'error' };
+  }
+});
+
 // ─── IPC : Fenêtre ───────────────────────────────────────────────────────────
 
 ipcMain.handle('detect-app', async (event, appName) => {
@@ -553,6 +602,12 @@ ipcMain.handle('check-admin-lock', async () => {
 
 ipcMain.handle('retriever-load', async (event, { passwordHash }) => {
   return Retriever.load(passwordHash);
+});
+
+ipcMain.handle('get-keys', async () => {
+  const config = ConfigManager.read();
+  if (!config.adminPasswordHash) return { success: false };
+  return Retriever.load(config.adminPasswordHash);
 });
 
 ipcMain.handle('retriever-save', async (event, { keys, passwordHash }) => {

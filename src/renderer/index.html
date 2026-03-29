@@ -141,11 +141,6 @@
         <h1 class="profiles-title">Bienvenue</h1>
         <p class="profiles-subtitle">Sélectionne ton profil pour accéder à la suite.</p>
         <div class="profiles-grid" id="loginProfilesGrid"></div>
-        <div style="margin-top:16px;">
-          <label class="field-label" style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;">
-            <input type="checkbox" id="login-remember"/> Rester connecté 30 jours
-          </label>
-        </div>
       </div>
 
     </div>
@@ -232,11 +227,12 @@
               <div class="master-stat-value" id="equipe-inactive-count">—</div>
             </div>
           </div>
-          <div class="master-equipe-toolbar">
+          <div class="master-equipe-toolbar" style="display:flex;align-items:center;gap:10px;">
             <select class="master-select" id="masterFilterGroup">
               <option value="all">Tous les groupes</option>
               <option value="cellule">Cellule Vidéo</option>
               <option value="externe">Externes</option>
+              <option value="archived">Archivés</option>
             </select>
           </div>
           <div id="masterEquipeList"></div>
@@ -764,7 +760,6 @@
             <img class="modal-patch-img" id="modalPatchImg" src="" alt=""/>
             <video id="modalPatchVideo" autoplay loop muted playsinline style="display:none;"></video>
           </div>
-          <div class="ambiance-label"><div class="ambiance-dot"></div>Ambiance</div>
         </div>
         <div class="modal-app-right">
           <div class="modal-app-name" id="mName"></div>
@@ -773,13 +768,13 @@
           <div class="modal-app-badges" id="mBadges"></div>
           <div class="modal-app-desc" id="mDesc"></div>
           <div class="app-tech">
-            <div class="tech-row"><span class="tech-label">Chemin</span><span class="tech-value"><span class="tech-path" id="mPath"></span><button class="btn-tiny">Modifier</button></span></div>
+            <div class="tech-row"><span class="tech-label">Chemin</span><span class="tech-value"><span class="tech-path" id="mPath"></span><button class="btn-tiny" id="mPathModifyBtn">Modifier</button></span></div>
             <div class="tech-row"><span class="tech-label">Version</span><span class="tech-value" id="mVersion"></span></div>
-            <div class="tech-row"><span class="tech-label">Documentation</span><span class="tech-value"><button class="btn-tiny">↗ Ouvrir</button></span></div>
+            <div class="tech-row"><span class="tech-label">Documentation</span><span class="tech-value"><button class="btn-tiny" id="mDocBtn">↗ Ouvrir</button></span></div>
           </div>
           <div class="modal-actions">
             <button class="m-btn m-btn-primary" id="mActionBtn">▶ Lancer</button>
-            <button class="m-btn m-btn-secondary" id="mChangelogBtn">📋 Changelog</button>
+            <button class="m-btn m-btn-secondary" id="mChangelogBtn">Changelog</button>
             <button class="m-btn m-btn-danger" id="mUninstallBtn" style="display:none;">✕ Désinstaller</button>
             <button class="m-btn m-btn-icon" id="mFavBtn" title="Favoris">★</button>
           </div>

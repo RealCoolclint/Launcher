@@ -38,6 +38,7 @@ contextBridge.exposeInMainWorld('launcher', {
 
   // Signalement de problème
   sendBugReport: (payload) => ipcRenderer.invoke('send-bug-report', payload),
+  sendProfileAlert: (payload) => ipcRenderer.invoke('send-profile-alert', payload),
 
   createAdminLock: () => ipcRenderer.invoke('create-admin-lock'),
   checkAdminLock:  () => ipcRenderer.invoke('check-admin-lock'),
@@ -46,6 +47,7 @@ contextBridge.exposeInMainWorld('launcher', {
   // Retriever — coffre-fort des clés API
   uninstallApp: (payload) => ipcRenderer.invoke('uninstall-app', payload),
   retrieverLoad: (payload) => ipcRenderer.invoke('retriever-load', payload),
+  getKeys: () => ipcRenderer.invoke('get-keys'),
   retrieverSave: (payload) => ipcRenderer.invoke('retriever-save', payload),
   retrieverSync: (payload) => ipcRenderer.invoke('retriever-sync', payload),
 
