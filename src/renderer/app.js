@@ -4,6 +4,8 @@
    ================================================================ */
 
 // ── Catalogue des apps ───────────────────────────────────────────
+const PROFILES_PER_PAGE = 8;
+
 const APPS_CATALOG = {
   backupflow: {
     key: 'backupflow', name: 'BackUpFlow',
@@ -326,7 +328,9 @@ let state = {
   isAdmin: false,
   pendingAdminProfile: null,
   ambianceAudio: null,
-  pendingExpiresAfterHours: null
+  pendingExpiresAfterHours: null,
+  profilesPage: 0,
+  loginProfilesPage: 0
 };
 
 // ── Init ─────────────────────────────────────────────────────────
@@ -712,12 +716,20 @@ async function showLoginScreen() {
   showScreen('login');
 }
 
-function renderLoginProfiles() {
+function renderLoginProfiles(page) {
+  if (page !== undefined) state.loginProfilesPage = page;
+  const currentPage = state.loginProfilesPage || 0;
   const grid = document.getElementById('loginProfilesGrid');
+  const allProfiles = state.config.profiles || [];
+  const totalPages = Math.max(1, Math.ceil(allProfiles.length / PROFILES_PER_PAGE));
+  const safePage = Math.min(currentPage, totalPages - 1);
+  if (safePage !== currentPage) state.loginProfilesPage = safePage;
+  const pageProfiles = allProfiles.slice(safePage * PROFILES_PER_PAGE, (safePage + 1) * PROFILES_PER_PAGE);
+
   grid.innerHTML = '';
-  (state.config.profiles || []).forEach(profile => {
-    const d = getProfileDisplay(profile);
+  pageProfiles.forEach(profile => {
     const card = document.createElement('div');
+    const d = getProfileDisplay(profile);
     card.className = 'profile-card';
     const avatarHtml = d.avatar
       ? `<img class="profile-avatar-img" src="${d.avatar}" alt="${d.firstName}"/>`
@@ -728,6 +740,28 @@ function renderLoginProfiles() {
       <div class="profile-email">${d.email}</div>`;
     card.addEventListener('click', () => openLoginModal(profile));
     grid.appendChild(card);
+  });
+
+  let pagination = document.getElementById('login-profiles-pagination');
+  if (!pagination) {
+    pagination = document.createElement('div');
+    pagination.id = 'login-profiles-pagination';
+    grid.parentNode.insertBefore(pagination, grid.nextSibling);
+  }
+  if (totalPages <= 1) { pagination.innerHTML = ''; return; }
+
+  const dots = Array.from({ length: totalPages }, (_, i) =>
+    `<button class="pagination-dot${i === safePage ? ' active' : ''}" data-page="${i}" aria-label="Page ${i + 1}"></button>`
+  ).join('');
+  pagination.innerHTML = `
+    <button class="pagination-arrow" id="login-prev" ${safePage === 0 ? 'disabled' : ''}>&#8592;</button>
+    <div class="pagination-dots">${dots}</div>
+    <button class="pagination-arrow" id="login-next" ${safePage === totalPages - 1 ? 'disabled' : ''}>&#8594;</button>`;
+
+  pagination.querySelector('#login-prev').addEventListener('click', () => renderLoginProfiles(safePage - 1));
+  pagination.querySelector('#login-next').addEventListener('click', () => renderLoginProfiles(safePage + 1));
+  pagination.querySelectorAll('.pagination-dot').forEach(btn => {
+    btn.addEventListener('click', () => renderLoginProfiles(Number(btn.dataset.page)));
   });
 }
 
@@ -835,11 +869,18 @@ function getProfileDisplay(profile) {
   return { firstName, lastName, email, avatar, initiales, color, role };
 }
 
-function renderProfiles() {
+function renderProfiles(page) {
+  if (page !== undefined) state.profilesPage = page;
+  const currentPage = state.profilesPage || 0;
   const grid = document.getElementById('profilesGrid');
-  grid.innerHTML = '';
+  const allProfiles = state.config.profiles || [];
+  const totalPages = Math.max(1, Math.ceil(allProfiles.length / PROFILES_PER_PAGE));
+  const safePage = Math.min(currentPage, totalPages - 1);
+  if (safePage !== currentPage) state.profilesPage = safePage;
+  const pageProfiles = allProfiles.slice(safePage * PROFILES_PER_PAGE, (safePage + 1) * PROFILES_PER_PAGE);
 
-  (state.config.profiles || []).forEach(profile => {
+  grid.innerHTML = '';
+  pageProfiles.forEach(profile => {
     const card = document.createElement('div');
     const d = getProfileDisplay(profile);
     const isPrivileged = d.role === 'admin' || d.role === 'co-admin';
@@ -868,6 +909,29 @@ function renderProfiles() {
   });
 
   document.getElementById('btnAddProfile').onclick = () => openProfileModal(null);
+
+  // Pagination controls
+  let pagination = document.getElementById('profiles-pagination');
+  if (!pagination) {
+    pagination = document.createElement('div');
+    pagination.id = 'profiles-pagination';
+    grid.parentNode.insertBefore(pagination, grid.nextSibling);
+  }
+  if (totalPages <= 1) { pagination.innerHTML = ''; return; }
+
+  const dots = Array.from({ length: totalPages }, (_, i) =>
+    `<button class="pagination-dot${i === safePage ? ' active' : ''}" data-page="${i}" aria-label="Page ${i + 1}"></button>`
+  ).join('');
+  pagination.innerHTML = `
+    <button class="pagination-arrow" id="profiles-prev" ${safePage === 0 ? 'disabled' : ''}>&#8592;</button>
+    <div class="pagination-dots">${dots}</div>
+    <button class="pagination-arrow" id="profiles-next" ${safePage === totalPages - 1 ? 'disabled' : ''}>&#8594;</button>`;
+
+  pagination.querySelector('#profiles-prev').addEventListener('click', () => renderProfiles(safePage - 1));
+  pagination.querySelector('#profiles-next').addEventListener('click', () => renderProfiles(safePage + 1));
+  pagination.querySelectorAll('.pagination-dot').forEach(btn => {
+    btn.addEventListener('click', () => renderProfiles(Number(btn.dataset.page)));
+  });
 }
 
 async function selectProfile(profile) {
