@@ -123,7 +123,10 @@ app.on('before-quit', async () => {
     if (fs.existsSync(SESSION_PATH)) {
       const raw = fs.readFileSync(SESSION_PATH, 'utf-8');
       const session = JSON.parse(raw);
-      if ((session.expiresAfterHours || 8) < 720) {
+      const expiresAt = new Date(session.expiresAt).getTime();
+      const writtenAt = new Date(session.writtenAt).getTime();
+      const durationHours = (expiresAt - writtenAt) / 3600000;
+      if (durationHours < 720) {
         await deleteLauncherSession();
       }
     }
@@ -180,9 +183,8 @@ ipcMain.handle('read-session', async () => {
     if (!fs.existsSync(SESSION_PATH)) return { valid: false, reason: 'no-file' };
     const raw = fs.readFileSync(SESSION_PATH, 'utf-8');
     const session = JSON.parse(raw);
-    const writtenAt = new Date(session.writtenAt).getTime();
-    const expiresMs = (session.expiresAfterHours || 8) * 3600 * 1000;
-    if (Date.now() > writtenAt + expiresMs) return { valid: false, reason: 'expired' };
+    const expiresAt = new Date(session.expiresAt).getTime();
+    if (Date.now() > expiresAt) return { valid: false, reason: 'expired' };
     return { valid: true, session };
   } catch (e) {
     return { valid: false, reason: 'error', error: e.message };

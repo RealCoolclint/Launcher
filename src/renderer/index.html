@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta http-equiv="Content-Security-Policy"
-    content="default-src 'self'; connect-src 'self' https://raw.githubusercontent.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; script-src 'self'"/>
+    content="default-src 'self'; connect-src 'self' https://raw.githubusercontent.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://realcoolclint.github.io; font-src https://fonts.gstatic.com; img-src 'self' data: https://raw.githubusercontent.com; script-src 'self'"/>
   <title>Launcher — Tranquility Suite</title>
   <link rel="stylesheet" href="styles.css"/>
 </head>
@@ -231,6 +231,10 @@
             <select class="master-select" id="masterFilterGroup">
               <option value="all">Tous les groupes</option>
               <option value="cellule">Cellule Vidéo</option>
+              <option value="redaction">Rédaction</option>
+              <option value="rs">RS</option>
+              <option value="ops">OPS</option>
+              <option value="direction">Direction</option>
               <option value="externe">Externes</option>
               <option value="archived">Archivés</option>
             </select>

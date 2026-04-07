@@ -49,6 +49,15 @@ const APPS_CATALOG = {
   }
 };
 
+const ROLES_MAP = {
+  cellule:   ['Directeur.rice de cellule','Cadreur.se / Monteur.se sénior.e','Cadreur.se / Monteur.se référent.e','Alternant.e Cadreur.se / Monteur.se','Stagiaire Cadreur.se / Monteur.se'],
+  redaction: ['Journaliste','Rédacteur.rice en chef vidéo','Secrétaire de rédaction','Stagiaire journaliste vidéo','Pigiste vidéo'],
+  rs:        ['Community Manager','Social Media Manager','Alternant.e Community Manager','Stagiaire Community Manager'],
+  ops:       ['Chef.fe de projets OPS','Chargé.e de projet','Prestataire vidéo'],
+  direction: ['Directeur.rice','Directeur.rice adjoint.e','Responsable de pôle'],
+  externe:   ['Journaliste vidéo','Rédacteur.rice en chef vidéo','Stagiaire journaliste vidéo','Pigiste vidéo','Prestataire vidéo','Chargé.e de projet vidéo','Chef.fe de projets OPS','Rédacteur.rice','Secrétaire de rédaction','Autre']
+};
+
 // ── Système de logs Launcher ─────────────────────────────────────
 const TQ_LOGS = [];
 const TQ_LOGS_MAX = 100;
@@ -675,11 +684,12 @@ async function showLoginScreen() {
     const profileId = result.session.profileId;
     const profile = (state.config.profiles || []).find(p => p.id === profileId);
     if (profile) {
+      const d = getProfileDisplay(profile);
       const avatarEl = document.getElementById('login-avatar');
-      avatarEl.innerHTML = profile.avatar
-        ? `<img class="profile-avatar-img" src="${profile.avatar}" alt="${profile.firstName}"/>`
-        : `<div class="profile-initials">${(profile.firstName?.[0]||'').toUpperCase()}${(profile.lastName?.[0]||'').toUpperCase()}</div>`;
-      document.getElementById('login-greeting').textContent = `Bonjour, ${profile.firstName}`;
+      avatarEl.innerHTML = d.avatar
+        ? `<img class="profile-avatar-img" src="${d.avatar}" alt="${d.firstName}"/>`
+        : `<div class="profile-initials">${d.initiales}</div>`;
+      document.getElementById('login-greeting').textContent = `Bonjour, ${d.firstName}`;
       document.getElementById('login-resume').style.display = 'block';
       document.getElementById('login-select').style.display = 'none';
 
@@ -706,15 +716,16 @@ function renderLoginProfiles() {
   const grid = document.getElementById('loginProfilesGrid');
   grid.innerHTML = '';
   (state.config.profiles || []).forEach(profile => {
+    const d = getProfileDisplay(profile);
     const card = document.createElement('div');
     card.className = 'profile-card';
-    const avatarHtml = profile.avatar
-      ? `<img class="profile-avatar-img" src="${profile.avatar}" alt="${profile.firstName}"/>`
-      : `<div class="profile-initials">${(profile.firstName?.[0]||'').toUpperCase()}${(profile.lastName?.[0]||'').toUpperCase()}</div>`;
+    const avatarHtml = d.avatar
+      ? `<img class="profile-avatar-img" src="${d.avatar}" alt="${d.firstName}"/>`
+      : `<div class="profile-initials">${d.initiales}</div>`;
     card.innerHTML = `
       <div class="profile-avatar">${avatarHtml}</div>
-      <div class="profile-name">${profile.firstName} ${profile.lastName}</div>
-      <div class="profile-email">${profile.email || ''}</div>`;
+      <div class="profile-name">${d.firstName} ${d.lastName}</div>
+      <div class="profile-email">${d.email}</div>`;
     card.addEventListener('click', () => openLoginModal(profile));
     grid.appendChild(card);
   });
@@ -722,9 +733,10 @@ function renderLoginProfiles() {
 
 function openLoginModal(profile) {
   const avatarEl = document.getElementById('modalLoginAvatar');
-  avatarEl.innerHTML = profile.avatar
-    ? `<img class="profile-avatar-img" src="${profile.avatar}" alt="${profile.firstName}" style="width:56px;height:56px;border-radius:50%;object-fit:cover;"/>`
-    : `<div class="profile-initials" style="width:56px;height:56px;font-size:20px;">${(profile.firstName?.[0]||'').toUpperCase()}${(profile.lastName?.[0]||'').toUpperCase()}</div>`;
+  const d = getProfileDisplay(profile);
+  avatarEl.innerHTML = d.avatar
+    ? `<img class="profile-avatar-img" src="${d.avatar}" alt="${d.firstName}" style="width:56px;height:56px;border-radius:50%;object-fit:cover;"/>`
+    : `<div class="profile-initials" style="width:56px;height:56px;font-size:20px;">${d.initiales}</div>`;
 
   document.getElementById('modalLogin').classList.add('open');
 
@@ -811,26 +823,39 @@ async function onboardingFinish() {
 // ════════════════════════════════════════════════════════════════
 // PROFILS
 // ════════════════════════════════════════════════════════════════
+function getProfileDisplay(profile) {
+  const id = profile.identity || {};
+  const firstName  = id.firstName  || profile.firstName  || '';
+  const lastName   = id.lastName   || profile.lastName   || '';
+  const email      = id.email      || profile.email      || '';
+  const avatar     = id.avatar     || profile.avatar      || '';
+  const initiales  = id.initiales  || (firstName[0] || '').toUpperCase() + (lastName[0] || '').toUpperCase();
+  const color      = id.color      || profile.color       || '#2563eb';
+  const role       = id.role       || profile.role        || 'user';
+  return { firstName, lastName, email, avatar, initiales, color, role };
+}
+
 function renderProfiles() {
   const grid = document.getElementById('profilesGrid');
   grid.innerHTML = '';
 
   (state.config.profiles || []).forEach(profile => {
     const card = document.createElement('div');
-    const isPrivileged = profile.role === 'admin' || profile.role === 'co-admin';
+    const d = getProfileDisplay(profile);
+    const isPrivileged = d.role === 'admin' || d.role === 'co-admin';
     card.className = 'profile-card' + (isPrivileged ? ' profile-privileged' : '');
-    const avatarHtml = profile.avatar
-      ? `<img class="profile-avatar-img" src="${profile.avatar}" alt="${profile.firstName}"/>`
-      : `<div class="profile-initials">${(profile.firstName?.[0] || '').toUpperCase()}${(profile.lastName?.[0] || '').toUpperCase()}</div>`;
-    const roleBadge = profile.role === 'admin'
+    const avatarHtml = d.avatar
+      ? `<img class="profile-avatar-img" src="${d.avatar}" alt="${d.firstName}"/>`
+      : `<div class="profile-initials">${d.initiales}</div>`;
+    const roleBadge = d.role === 'admin'
       ? '<span class="profile-role-badge admin">Admin</span>'
-      : profile.role === 'co-admin'
+      : d.role === 'co-admin'
       ? '<span class="profile-role-badge co-admin">Co-Admin</span>'
       : '';
     card.innerHTML = `
       <div class="profile-avatar">${avatarHtml}</div>
-      <div class="profile-name">${profile.firstName} ${profile.lastName}</div>
-      <div class="profile-email">${profile.email || ''}</div>
+      <div class="profile-name">${d.firstName} ${d.lastName}</div>
+      <div class="profile-email">${d.email}</div>
       ${roleBadge}
       <div class="profile-actions">
         <button class="btn btn-ghost btn-sm" data-action="edit">Modifier</button>
@@ -2449,37 +2474,15 @@ function renderMasterEquipe() {
   if (!list) return;
   list.innerHTML = '';
 
-  const ROLES_CELLULE = [
-    'Directeur.rice de cellule',
-    'Cadreur.se / Monteur.se sénior.e',
-    'Cadreur.se / Monteur.se référent.e',
-    'Alternant.e Cadreur.se / Monteur.se',
-    'Stagiaire Cadreur.se / Monteur.se'
-  ];
-  const ROLES_EXTERNE = [
-    'Journaliste vidéo',
-    'Rédacteur.rice en chef vidéo',
-    'Stagiaire journaliste vidéo',
-    'Pigiste vidéo',
-    'Prestataire vidéo',
-    'Chargé.e de projet vidéo',
-    'Chef.fe de projets OPS',
-    'Rédacteur.rice',
-    'Secrétaire de rédaction',
-    'Autre'
-  ];
-
   const filterGroup = document.getElementById('masterFilterGroup')?.value || 'all';
 
   (state.config.profiles || []).forEach(profile => {
     profile = migrateProfileToPasseport(profile);
     if (profile.status === 'archived' && filterGroup !== 'archived') return;
     if (filterGroup === 'archived' && profile.status !== 'archived') return;
-    if (filterGroup === 'cellule' && profile.group === 'externe') return;
-    if (filterGroup === 'externe' && profile.group !== 'externe') return;
+    if (filterGroup !== 'all' && filterGroup !== 'archived' && profile.group !== filterGroup) return;
 
-    const isCellule = profile.group !== 'externe';
-    const roles = isCellule ? ROLES_CELLULE : ROLES_EXTERNE;
+    const roles = ROLES_MAP[profile.group] || ROLES_MAP['cellule'];
     const roleOptions = roles.map(r =>
       `<option value="${r}" ${profile.jobRole === r ? 'selected' : ''}>${r}</option>`
     ).join('');
@@ -2531,8 +2534,12 @@ function renderMasterEquipe() {
         })()}</div>
       </div>
       <select class="master-select master-role-select" data-id="${profile.id}" data-type="group">
-        <option value="cellule" ${profile.group !== 'externe' ? 'selected' : ''}>Cellule Vidéo</option>
-        <option value="externe" ${profile.group === 'externe' ? 'selected' : ''}>Externe</option>
+        <option value="cellule"   ${profile.group === 'cellule'   ? 'selected' : ''}>Cellule Vidéo</option>
+        <option value="redaction" ${profile.group === 'redaction' ? 'selected' : ''}>Rédaction</option>
+        <option value="rs"        ${profile.group === 'rs'        ? 'selected' : ''}>RS</option>
+        <option value="ops"       ${profile.group === 'ops'       ? 'selected' : ''}>OPS</option>
+        <option value="direction" ${profile.group === 'direction' ? 'selected' : ''}>Direction</option>
+        <option value="externe"   ${profile.group === 'externe'   ? 'selected' : ''}>Externe</option>
       </select>
       <select class="master-select master-role-select" data-id="${profile.id}" data-type="jobrole">
         <option value="">— Rôle —</option>
@@ -2587,6 +2594,17 @@ function renderMasterEquipe() {
       p.updatedAt = new Date().toISOString();
       await saveConfig();
       showToast(`Profil ${p.identity.firstName} mis à jour.`, 'success');
+    });
+
+    const groupSel   = row.querySelector('[data-type="group"]');
+    const jobroleSel = row.querySelector('[data-type="jobrole"]');
+    groupSel.addEventListener('change', () => {
+      const newGroup = groupSel.value;
+      const newRoles = ROLES_MAP[newGroup] || ROLES_MAP['cellule'];
+      const currentJobRole = jobroleSel.value;
+      jobroleSel.innerHTML = newRoles.map(r =>
+        `<option value="${r}" ${r === currentJobRole ? 'selected' : ''}>${r}</option>`
+      ).join('');
     });
 
     row.querySelector('.btn-set-dmg-folder').addEventListener('click', async () => {
@@ -2856,6 +2874,12 @@ function openEditProfileModal(profile) {
           <input class="text-input" type="text" id="epLastName" value="${id.lastName || ''}"/>
         </div>
         <div class="field-group">
+          <label class="field-label">Initiales</label>
+          <input class="text-input" type="text" id="epInitiales" maxlength="3"
+            value="${(id.initiales || ((id.firstName?.[0] || '') + (id.lastName?.[0] || '')).toUpperCase())}"
+            placeholder="ex : AP" style="text-transform:uppercase;width:80px;"/>
+        </div>
+        <div class="field-group">
           <label class="field-label">Email</label>
           <input class="text-input" type="email" id="epEmail" value="${id.email || ''}"/>
         </div>
@@ -2876,6 +2900,20 @@ function openEditProfileModal(profile) {
   `;
   document.body.appendChild(modal);
 
+  const epFirst = document.getElementById('epFirstName');
+  const epLast  = document.getElementById('epLastName');
+  const epInit  = document.getElementById('epInitiales');
+  function autoInitiales() {
+    const f = epFirst.value.trim();
+    const l = epLast.value.trim();
+    if (f && l) epInit.value = (f[0] + l[0]).toUpperCase();
+  }
+  epFirst.addEventListener('input', autoInitiales);
+  epLast.addEventListener('input', autoInitiales);
+  epInit.addEventListener('input', () => {
+    epInit.value = epInit.value.toUpperCase();
+  });
+
   document.getElementById('btnCloseEditProfile').onclick = () => modal.remove();
   document.getElementById('btnCancelEditProfile').onclick = () => modal.remove();
   document.getElementById('btnConfirmEditProfile').onclick = async () => {
@@ -2887,7 +2925,8 @@ function openEditProfileModal(profile) {
     profile.identity.email       = document.getElementById('epEmail').value.trim();
     profile.identity.mondayUserId = document.getElementById('epMondayId').value.trim();
     profile.identity.color       = document.getElementById('epColor').value;
-    profile.identity.initiales   = (firstName[0] + lastName[0]).toUpperCase();
+    const rawInit = document.getElementById('epInitiales').value.trim().toUpperCase();
+    profile.identity.initiales = rawInit || (firstName[0] + lastName[0]).toUpperCase();
     profile.updatedAt = new Date().toISOString();
     await saveConfig();
     await sendProfileAlert('profile-edited', profile);
