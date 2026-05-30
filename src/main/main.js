@@ -156,6 +156,15 @@ ipcMain.handle('save-config', async (event, config) => {
   return ConfigManager.write(config);
 });
 
+ipcMain.handle('get-resend-key', async () => {
+  try {
+    const cfg = ConfigManager.read();
+    return { success: true, key: cfg.resendKey || '' };
+  } catch (err) {
+    return { success: false, key: '' };
+  }
+});
+
 ipcMain.handle('set-login-item', async (event, enabled) => {
   app.setLoginItemSettings({ openAtLogin: !!enabled });
   return { success: true };

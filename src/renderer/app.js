@@ -12,6 +12,7 @@ const APPS_CATALOG = {
     description: 'Sauvegarde automatisée des rushes — NAS, SSD, cloud.',
     motto: 'Nulla data pereunt', translation: 'Aucune donnée ne se perd.',
     type: 'local', repo: 'RealCoolclint/BackUpFlow',
+    dmgUrl: 'https://github.com/RealCoolclint/BackUpFlow/releases/download/v1.02.04.26/BackUpFlow-v1.02.04.26.dmg',
     patch: 'assets/patches/patch-backupflow.png',
     appFileName: 'BackUpFlow.app',
     ambiance: 'particles',
@@ -23,6 +24,7 @@ const APPS_CATALOG = {
     description: 'Transfert et organisation des fichiers Premiere.',
     motto: 'Recte et celeriter', translation: 'Vite et bien.',
     type: 'local', repo: 'RealCoolclint/Transporter',
+    dmgUrl: 'https://github.com/RealCoolclint/Transporter/releases/download/v1.01.04.26/TransPorter-1.01.04.26.dmg',
     patch: 'assets/patches/patch-transporter.png',
     appFileName: 'TransPorter',
     ambiance: 'orbit',
@@ -3039,11 +3041,26 @@ document.getElementById('btnSendBug').addEventListener('click', async () => {
   const message = document.getElementById('bugMessage').value.trim();
   if (!message) { showToast('Décris le problème avant d\'envoyer.', 'danger'); return; }
   const profileName = state.currentProfile ? `${state.currentProfile.firstName} ${state.currentProfile.lastName}` : 'Invité';
+
   let resendApiKey = '';
+
+  // Tentative 1 — Retriever admin
   if (state.config.adminPasswordHash) {
     const keys = await window.launcher.retrieverLoad({ passwordHash: state.config.adminPasswordHash });
     if (keys.success) resendApiKey = keys.keys?.resend || '';
   }
+
+  // Tentative 2 — Fallback clé config
+  if (!resendApiKey) {
+    const fallback = await window.launcher.getResendKey();
+    if (fallback.success) resendApiKey = fallback.key || '';
+  }
+
+  if (!resendApiKey) {
+    showToast('Clé Resend manquante — contacte Martin.', 'danger');
+    return;
+  }
+
   const result = await window.launcher.sendBugReport({ profileName, message, apiKey: resendApiKey });
   document.getElementById('modalBug').classList.remove('open');
   showToast(result.success ? 'Signalement envoyé à Martin.' : 'Erreur d\'envoi.', result.success ? 'success' : 'danger');
@@ -3092,6 +3109,7 @@ function openSettings() {
   });
   document.getElementById('settings-notif-updates').checked = s.notifUpdates !== false;
   document.getElementById('settings-notif-summary').checked = s.notifSummary !== false;
+  document.getElementById('settings-resend-key').value = state.config.resendKey || '';
   document.getElementById('settings-show-mottos').checked = s.showMottos !== false;
   document.getElementById('settings-show-badges').checked = s.showBadges !== false;
   document.getElementById('settings-launch-at-login').checked = !!s.launchAtLogin;
@@ -3213,6 +3231,15 @@ function initSettingsModal() {
     if (!state.currentProfile || state.currentProfile.id === 'guest') return;
     document.getElementById('modal-settings').classList.remove('open');
     openProfileModal(state.currentProfile.id);
+  });
+
+  document.getElementById('settings-resend-save').addEventListener('click', async () => {
+    const key = document.getElementById('settings-resend-key').value.trim();
+    if (!key) { showToast('Clé Resend vide — rien enregistré.', 'danger'); return; }
+    const config = await window.launcher.getConfig();
+    config.resendKey = key;
+    await window.launcher.saveConfig(config);
+    showToast('Clé Resend enregistrée.', 'success');
   });
 }
 

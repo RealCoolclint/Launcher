@@ -598,6 +598,15 @@
               <input type="checkbox" id="settings-notif-summary"/> Notification résumé au démarrage
             </label>
           </div>
+          <div class="master-section-title" style="margin-top:24px;">Signalements</div>
+          <div class="field-group">
+            <label class="field-label" for="settings-resend-key">Clé Resend (signalements équipe)</label>
+            <div style="display:flex;gap:8px;align-items:flex-end">
+              <input class="text-input" type="password" id="settings-resend-key" placeholder="re_xxxxxxxxxxxx" style="flex:1;max-width:400px"/>
+              <button type="button" class="btn btn-ghost btn-sm" id="settings-resend-save">Enregistrer</button>
+            </div>
+            <div class="master-hint" style="margin-top:6px;">Utilisée pour envoyer les signalements de tous les profils. Visible uniquement ici.</div>
+          </div>
         </div>
         <div class="settings-panel master-tab" id="settings-panel-profil" style="display:none">
           <div class="field-group" style="display:flex;gap:8px;flex-wrap:wrap">

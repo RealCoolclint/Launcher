@@ -39,6 +39,7 @@ contextBridge.exposeInMainWorld('launcher', {
   // Signalement de problème
   sendBugReport: (payload) => ipcRenderer.invoke('send-bug-report', payload),
   sendProfileAlert: (payload) => ipcRenderer.invoke('send-profile-alert', payload),
+  getResendKey: () => ipcRenderer.invoke('get-resend-key'),
 
   createAdminLock: () => ipcRenderer.invoke('create-admin-lock'),
   checkAdminLock:  () => ipcRenderer.invoke('check-admin-lock'),
