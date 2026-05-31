@@ -50,6 +50,18 @@ const APPS_CATALOG = {
     patch: 'assets/patches/patch-manifest.png', ambiance: 'stars',
     status: 'released',
     tags: ['planning', 'organisation', 'editorial', 'cellule', 'externe']
+  },
+  ark: {
+    key: 'ark', name: 'ARK',
+    description: 'Archivage et compression des projets livrés.',
+    motto: 'Memoria manet', translation: 'La mémoire demeure.',
+    type: 'local', repo: 'RealCoolclint/ARK',
+    dmgUrl: 'https://github.com/RealCoolclint/ARK/releases/download/v1.02.04.26/ARK_V1.02.04.26.dmg',
+    patch: 'assets/patches/patch-ark.png',
+    appFileName: 'ARK.app',
+    ambiance: 'nebula',
+    status: 'released',
+    tags: ['archivage', 'technique', 'post-production', 'cellule']
   }
 };
 
@@ -266,7 +278,6 @@ function sortAppsByRole(apps, profile) {
 }
 
 const SUGG_EXTRA = [
-  { key: 'ark',     name: 'ARK',     type: 'Bientôt',          badge: 'beta', icon: '🗄️' },
   { key: 'cargo',   name: 'Cargo',   type: 'Bientôt',          badge: 'soon', icon: '📦' },
   { key: 'payload', name: 'Payload', type: 'Desktop + Mobile', badge: 'soon', icon: '📡' }
 ];
@@ -282,7 +293,8 @@ const AMBIANCE_VIDEOS = {
   transporter: 'assets/ambiances/ambiance-transporter.mp4',
   backupflow:  'assets/ambiances/ambiance-backupflow.mp4',
   manifest:    'assets/ambiances/ambiance-manifest.mp4',
-  reviewer:    'assets/ambiances/ambiance-reviewer.mp4'
+  reviewer:    'assets/ambiances/ambiance-reviewer.mp4',
+  ark: 'assets/ambiances/ambiance-ark.mp4',
 };
 
 const SOUND_TRACKS = {
