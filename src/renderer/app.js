@@ -62,6 +62,18 @@ const APPS_CATALOG = {
     ambiance: 'nebula',
     status: 'released',
     tags: ['archivage', 'technique', 'post-production', 'cellule']
+  },
+  rover: {
+    key: 'rover', name: 'Rover',
+    description: 'Téléchargement et gestion des vidéos YouTube.',
+    motto: 'Explora et refer', translation: 'Explore et rapporte.',
+    type: 'local', repo: 'RealCoolclint/ROVER',
+    dmgUrl: 'https://github.com/RealCoolclint/ROVER/releases/download/V1.04.06.26/ROVER-V1.04.06.26.dmg',
+    patch: 'assets/patches/patch-rover.png',
+    appFileName: 'ROVER.app',
+    ambiance: 'orbit',
+    status: 'released',
+    tags: ['téléchargement', 'technique', 'production', 'cellule']
   }
 };
 
@@ -295,6 +307,7 @@ const AMBIANCE_VIDEOS = {
   manifest:    'assets/ambiances/ambiance-manifest.mp4',
   reviewer:    'assets/ambiances/ambiance-reviewer.mp4',
   ark: 'assets/ambiances/ambiance-ark.mp4',
+  rover: 'assets/ambiances/ambiance-rover.mp4',
 };
 
 const SOUND_TRACKS = {
@@ -2511,7 +2524,7 @@ const TRANQUILITY_TOOLS = [
   { name: 'Payload', status: 'projet', statusLabel: 'En projet' },
   { name: 'Hatch', status: 'projet', statusLabel: 'En projet' },
   { name: 'Guidance', status: 'projet', statusLabel: 'En projet' },
-  { name: 'Rover', status: 'projet', statusLabel: 'En projet' },
+  { name: 'Rover', status: 'orbite', statusLabel: 'En orbite' },
   { name: 'Beacon', status: 'projet', statusLabel: 'En projet' },
   { name: 'Debrief', status: 'projet', statusLabel: 'En projet' },
   { name: 'Telemetry', status: 'projet', statusLabel: 'En projet' },
