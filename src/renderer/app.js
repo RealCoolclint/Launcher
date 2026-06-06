@@ -1271,8 +1271,9 @@ async function setupApp(key) {
   const appDef = APPS_CATALOG[key];
   if (!appDef) return;
   const update = state.updates[key];
-  if (update?.dmgUrl) {
-    openInstallModal(key, update.dmgUrl);
+  const dmgUrl = update?.dmgUrl || appDef.dmgUrl;
+  if (dmgUrl) {
+    openInstallModal(key, dmgUrl);
   } else {
     const picked = await window.launcher.pickAppPath(appDef.name);
     if (picked) {
@@ -1290,10 +1291,16 @@ function openInstallModal(key, dmgUrl) {
   state.installContext = { key, dmgUrl, dmgPath: null };
 
   document.getElementById('installAppName').textContent  = appDef.name;
-  document.getElementById('installAppName2').textContent = appDef.name;
+  {
+    const el = document.getElementById('installAppName2');
+    if (el) el.textContent = appDef.name;
+  }
   document.getElementById('installSuccessLabel').textContent    = 'En orbite.';
   document.getElementById('installSuccessSubLabel').textContent = `${appDef.name} est prêt à être lancé.`;
-  document.getElementById('installDragIcon').textContent = appDef.name.slice(0,3).toUpperCase();
+  {
+    const el = document.getElementById('installDragIcon');
+    if (el) el.textContent = appDef.name.slice(0,3).toUpperCase();
+  }
   document.getElementById('installPatchImg').src = appDef.patch;
   const video = document.getElementById('installAmbianceVideo');
   const videoSrc = AMBIANCE_VIDEOS[key];
@@ -3075,7 +3082,13 @@ document.getElementById('btnSendBug').addEventListener('click', async () => {
     if (keys.success) resendApiKey = keys.keys?.resend || '';
   }
 
-  // Tentative 2 — Fallback clé config
+  // Tentative 2 — Retriever via hash config
+  if (!resendApiKey) {
+    const keys = await window.launcher.getKeys();
+    if (keys.success) resendApiKey = keys.keys?.resend || '';
+  }
+
+  // Tentative 3 — Fallback clé config
   if (!resendApiKey) {
     const fallback = await window.launcher.getResendKey();
     if (fallback.success) resendApiKey = fallback.key || '';
